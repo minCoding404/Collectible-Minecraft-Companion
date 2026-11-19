@@ -2,6 +2,8 @@
 
 An interactive, bilingual (English/German) companion for Minecraft enchantments, gear, collectibles, and dated notes with nested checklists.
 
+See [Infrastructure and accessibility](INFRASTRUCTURE.md) for the application architecture, data flow, local storage, and accessibility guidance.
+
 ## Features
 
 - Check off enchantments and track overall and per-item progress.
@@ -62,7 +64,7 @@ The footer identifies the project as **Collectible Minecraft Companion (CMC)** a
 
    Or use `npm start`.
 
-5. Open [http://localhost:4173](http://localhost:4173) in your browser. Keep the server running while using the app.
+5. Open the URL printed by Vite (normally [http://localhost:5173](http://localhost:5173)). Keep the server running while using the app.
 
 ## Run tests
 

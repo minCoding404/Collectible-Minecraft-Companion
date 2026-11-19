@@ -18,4 +18,5 @@
 - Renamed the app to Collectible Minecraft Companion (CMC) and renamed the npm package.
 - Expanded the bilingual glossary and added a "Made by minCoding404" footer credit.
 - Removed Minecraft Wiki source links and added the Minecraft/Mojang/Microsoft disclaimer to the footer.
+- Added an accessible infrastructure overview covering application flow, browser storage, external resources, and accessibility practices.
 - Updated the README with the new features and collectible locations.
