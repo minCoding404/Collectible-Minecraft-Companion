@@ -1,6 +1,6 @@
 # Changelist
 
-## Unreleased
+## 2026-11-19
 
 - Added dedicated Enchantments, Collectibles, and Notes pages.
 - Added dated notes with names, descriptions, optional line-based checklists, completion dates, and hidden status.
