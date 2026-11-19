@@ -18,9 +18,14 @@ import {
   SMITHING_TEMPLATES,
   SUPPORTED_VERSIONS,
   VERSION_PROFILES,
+  getAdjustedRecipe,
   getCompletedTotal,
   getTaskTotal,
   resetItemState,
+  sanitizeChecklistLayout,
+  sanitizeChecklistState,
+  sanitizeCustomItems,
+  sanitizeNotes,
 } from "../data.js";
 
 test("the guide checklist includes every armor, weapon, and tool item", () => {
@@ -47,7 +52,7 @@ test("collectible checklists cover every current smithing template and music dis
   for (const item of COLLECTIBLES) {
     assert.ok(item.location, `Missing German location for ${item.id}`);
     assert.ok(item.locationEn, `Missing English location for ${item.id}`);
-    assert.ok(item.sourceUrl.startsWith("https://minecraft.wiki/"), `Missing source link for ${item.id}`);
+    assert.equal("sourceUrl" in item, false, `${item.id} should not expose an external source link`);
     assert.equal(item.tasks.length, 1, `${item.id} should have one collection checkbox`);
   }
 });
@@ -170,4 +175,84 @@ test("published recipe totals match their listed anvil step costs", () => {
   assert.deepEqual(Object.fromEntries(RECIPES.map(({ item, levels }) => [item, levels])), expectedTotals);
   assert.ok(RECIPES.every((recipe) => ITEMS.some((item) => item.id === recipe.itemId)));
   assert.ok(RECIPES.every((recipe) => recipe.sequence.reduce((total, step) => total + step.cost, 0) === recipe.levels));
+});
+
+test("the anvil planner adds the target item's prior-work penalty to each item application", () => {
+  const helmet = RECIPES.find((recipe) => recipe.itemId === "helmet");
+  const untouched = getAdjustedRecipe(helmet);
+  assert.equal(untouched.levels, helmet.levels);
+  assert.equal(untouched.sequence.reduce((total, step) => total + step.adjustedCost, 0), helmet.levels);
+
+  const worked = getAdjustedRecipe(helmet, 1);
+  assert.equal(worked.additionalLevels, 7);
+  assert.equal(worked.levels, 34);
+  assert.deepEqual(worked.sequence.filter((step) => step.additionalCost).map((step) => step.additionalCost), [1, 2, 4]);
+  const blocked = getAdjustedRecipe(helmet, 4);
+  assert.equal(blocked.sequence[4].adjustedCost, 69);
+  assert.ok(blocked.sequence.some((step) => step.adjustedCost >= 40));
+  const sword = RECIPES.find((recipe) => recipe.itemId === "sword");
+  assert.deepEqual(sword.sequence.filter((step) => step.itemApplications).map((step) => step.cost), [6, 11, 11, 14]);
+  assert.equal(getAdjustedRecipe(sword, 1).additionalLevels, 15);
+  assert.throws(() => getAdjustedRecipe(helmet, -1), RangeError);
+  assert.throws(() => getAdjustedRecipe(helmet, 6), RangeError);
+});
+
+test("backup sanitization preserves valid duplicate progress and drops unknown checklist data", () => {
+  const customItems = [{
+    id: "custom-item-1",
+    sourceId: "boots",
+    copyNumber: 1,
+    customName: "  Water Boots  ",
+  }];
+  const normalizedCopies = sanitizeCustomItems(customItems);
+  assert.equal(normalizedCopies[0].customName, "Water Boots");
+
+  const safe = sanitizeChecklistState({
+    helmet: { tasks: { mending: true, "unknown-task": true }, choices: { protection: "not-an-option" } },
+    "custom-item-1": {
+      tasks: { mending: true, "netherite-upgrade": true, "material-netherite-ingot": true, "not-a-task": true },
+      choices: { movement: "frost-walker", protection: "invalid" },
+    },
+    "unknown-item": { tasks: { mending: true } },
+  }, normalizedCopies);
+  assert.deepEqual(safe.helmet, { tasks: { mending: true }, choices: {} });
+  assert.deepEqual(safe["custom-item-1"], {
+    tasks: { mending: true, "netherite-upgrade": true, "material-netherite-ingot": true },
+    choices: { movement: "frost-walker" },
+  });
+  assert.throws(() => sanitizeCustomItems([{ ...customItems[0] }, { ...customItems[0] }]), TypeError);
+});
+
+test("layout sanitization keeps valid hidden and ordered ids without duplicates", () => {
+  const customItems = [{ id: "custom-item-1", sourceId: "sword", copyNumber: 1, customName: "" }];
+  assert.deepEqual(sanitizeChecklistLayout({
+    hidden: ["boots", "boots", "unknown-item"],
+    order: ["sword", "custom-item-1", "unknown-item", "sword"],
+  }, customItems), {
+    hidden: ["boots"],
+    order: ["sword", "custom-item-1"],
+  });
+});
+
+test("notes validate dates, checklist tasks, and hidden/completed status", () => {
+  const notes = sanitizeNotes([{
+    id: "note-1",
+    name: "Netherite run",
+    createdDate: "2026-03-19",
+    description: "Gather the upgrade materials.",
+    completedDate: "2026-03-20",
+    hidden: true,
+    checklist: [{ text: "Find a template", done: true }],
+  }]);
+  assert.deepEqual(notes[0], {
+    id: "note-1",
+    name: "Netherite run",
+    createdDate: "2026-03-19",
+    description: "Gather the upgrade materials.",
+    completedDate: "2026-03-20",
+    hidden: true,
+    checklist: [{ text: "Find a template", done: true }],
+  });
+  assert.throws(() => sanitizeNotes([{ ...notes[0], createdDate: "2026-02-30" }]), /invalid or unsupported/);
+  assert.throws(() => sanitizeNotes([{ ...notes[0], checklist: [{ text: " ", done: false }] }]), /invalid task/);
 });

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101116" />
     <meta name="description" content="An interactive Minecraft enchantment checklist with exclusive choices and optimized anvil book orders." />
-    <title>Enchanting Desk — Minecraft Checkliste</title>
+    <title>Collectible Minecraft Companion (CMC)</title>
     <link rel="preconnect" href="https://minecraft.wiki" />
     <link rel="stylesheet" href="./styles.css" />
     <script type="module" src="./app.js"></script>
@@ -13,13 +13,14 @@
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="#enchantments" aria-label="Enchanting Desk home">
+        <a class="brand" href="#enchantments" aria-label="Collectible Minecraft Companion home">
           <span class="brand-mark" aria-hidden="true">✦</span>
-          <span>ENCHANTING <b>DESK</b></span>
+          <span>CMC</span>
         </a>
         <nav class="site-navigation" aria-label="Main navigation">
           <a class="site-nav-link" href="#enchantments" data-i18n="navEnchantments">Enchantments</a>
           <a class="site-nav-link" href="#collectibles" data-i18n="navCollectibles">Collectibles</a>
+          <a class="site-nav-link" href="#notes" data-i18n="navNotes">Notes</a>
         </nav>
         <div class="topbar-actions">
           <label class="profile-picker">
@@ -41,7 +42,7 @@
             </select>
           </label>
           <label class="language-picker">
-            <span class="sr-only" data-i18n="languageLabel">Language</span>
+            <span class="profile-picker-label" data-i18n="languageLabel">Language</span>
             <select id="language-select" aria-label="Select language">
               <option value="en" selected>English</option>
               <option value="de">Deutsch</option>
@@ -106,12 +107,14 @@
               <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="collectionEyebrow">YOUR COLLECTION</span></p>
               <h2 id="checklist-title"><span data-i18n="collectionTitle">The checklist</span><span class="heading-period">.</span></h2>
             </div>
-            <label class="search-box">
-              <span class="search-icon" aria-hidden="true"></span>
-              <span class="sr-only" data-i18n="searchLabel">Search items or enchantments</span>
-              <input id="search-input" type="search" placeholder="Search items..." autocomplete="off" />
-              <kbd>/</kbd>
-            </label>
+            <div class="checklist-filters">
+              <label class="search-box">
+                <span class="search-icon" aria-hidden="true"></span>
+                <span class="sr-only" data-i18n="searchLabel">Search items or enchantments</span>
+                <input id="search-input" type="search" placeholder="Search items..." autocomplete="off" />
+                <kbd>/</kbd>
+              </label>
+            </div>
           </div>
 
           <div id="category-tabs" class="category-tabs" role="group" aria-label="Item category">
@@ -119,12 +122,32 @@
             <button type="button" class="category-tab" data-category="armor" aria-pressed="false"><span class="category-label" data-i18n="categoryArmor">Armor</span><span class="category-count" data-count="armor">0</span></button>
             <button type="button" class="category-tab" data-category="weapons" aria-pressed="false"><span class="category-label" data-i18n="categoryWeapons">Weapons</span><span class="category-count" data-count="weapons">0</span></button>
             <button type="button" class="category-tab" data-category="tools" aria-pressed="false"><span class="category-label" data-i18n="categoryTools">Tools</span><span class="category-count" data-count="tools">0</span></button>
+            <button type="button" class="category-tab" data-category="hidden" aria-pressed="false"><span class="category-label" data-i18n="categoryHiddenItems">Hidden</span><span class="category-count" data-count="hidden">0</span></button>
           </div>
 
           <div class="guide-note">
             <p data-i18n="guideNote">Book combinations and level costs are shown on the relevant items. Previous anvil work can increase actual costs.</p>
-            <a href="https://minecraft.wiki/w/Tutorial:Best_enchantments_guide" target="_blank" rel="noreferrer"><span data-i18n="sourceLink">Minecraft Wiki: Best enchantments guide</span> <span aria-hidden="true">↗</span></a>
           </div>
+          <section class="anvil-planner" aria-labelledby="anvil-planner-title">
+            <div class="anvil-planner-heading">
+              <div>
+                <p class="eyebrow" data-i18n="plannerEyebrow">ANVIL COST PLANNER</p>
+                <h3 id="anvil-planner-title" data-i18n="plannerTitle">Estimate your anvil level cost.</h3>
+              </div>
+              <div class="planner-controls">
+                <label>
+                  <span data-i18n="plannerItemLabel">Item</span>
+                  <select id="planner-item-select"></select>
+                </label>
+                <label>
+                  <span data-i18n="plannerPriorWorkLabel">Prior anvil uses</span>
+                  <select id="planner-work-select"></select>
+                </label>
+              </div>
+            </div>
+            <div id="planner-output" class="planner-output" aria-live="polite"></div>
+            <p class="planner-note" data-i18n="plannerNote">Estimate follows the guide sequence and adds prior-work penalties to the target item. Source books are assumed unused.</p>
+          </section>
           <div id="items-grid" class="items-grid" aria-live="polite"></div>
           <p id="empty-state" class="empty-state" hidden data-i18n="emptyState">No items found. Try another search.</p>
         </section>
@@ -168,25 +191,89 @@
                 <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="collectionEyebrow">YOUR COLLECTION</span></p>
                 <h2 id="collectibles-checklist-title"><span data-i18n="navCollectibles">Collectibles</span><span class="heading-period">.</span></h2>
               </div>
-              <label class="search-box">
-                <span class="search-icon" aria-hidden="true"></span>
-                <span class="sr-only" data-i18n="collectiblesSearchLabel">Search collectibles or find locations</span>
-                <input id="collectibles-search-input" type="search" placeholder="Search templates, discs, or locations..." autocomplete="off" />
-                <kbd>/</kbd>
-              </label>
+              <div class="checklist-filters">
+                <label class="search-box">
+                  <span class="search-icon" aria-hidden="true"></span>
+                  <span class="sr-only" data-i18n="collectiblesSearchLabel">Search collectibles or find locations</span>
+                  <input id="collectibles-search-input" type="search" placeholder="Search templates, discs, or locations..." autocomplete="off" />
+                  <kbd>/</kbd>
+                </label>
+              </div>
             </div>
             <div id="collectible-tabs" class="category-tabs" role="group" aria-label="Collectible type">
               <button type="button" class="category-tab is-active" data-collectible-type="all" aria-pressed="true"><span class="category-label" data-i18n="collectionAll">All</span><span class="category-count" data-collectible-count="all">0</span></button>
               <button type="button" class="category-tab" data-collectible-type="templates" aria-pressed="false"><span class="category-label" data-i18n="collectionTemplates">Smithing templates</span><span class="category-count" data-collectible-count="templates">0</span></button>
               <button type="button" class="category-tab" data-collectible-type="music" aria-pressed="false"><span class="category-label" data-i18n="collectionMusic">Music discs</span><span class="category-count" data-collectible-count="music">0</span></button>
+              <button type="button" class="category-tab" data-collectible-type="hidden" aria-pressed="false"><span class="category-label" data-i18n="collectionHidden">Hidden</span><span class="category-count" data-collectible-count="hidden">0</span></button>
             </div>
             <div class="guide-note">
               <p data-i18n="collectiblesDescription">Track every current template and disc, with its in-game find location.</p>
-              <a href="https://minecraft.wiki/w/Smithing_Template" target="_blank" rel="noreferrer"><span data-i18n="collectionTemplates">Smithing templates</span> <span aria-hidden="true">↗</span></a>
-              <a href="https://minecraft.wiki/w/Music_Disc" target="_blank" rel="noreferrer"><span data-i18n="collectionMusic">Music discs</span> <span aria-hidden="true">↗</span></a>
             </div>
             <div id="collectibles-grid" class="items-grid" aria-live="polite"></div>
             <p id="collectibles-empty-state" class="empty-state" hidden data-i18n="collectiblesEmptyState">No collectibles found. Try another search.</p>
+          </section>
+        </div>
+
+        <div id="notes-page" class="site-page" hidden>
+          <section class="hero notes-hero" aria-labelledby="notes-title">
+            <div class="hero-copy">
+              <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="notesEyebrow">FIELD NOTES</span></p>
+              <h1 id="notes-title" data-i18n="notesTitle">Your notes</h1>
+              <p class="hero-description" data-i18n="notesDescription">Create dated notes, turn them into checklists, and track when they're complete.</p>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
+              <div class="hero-glow"></div>
+              <div class="floating-rune rune-one">✎</div>
+              <div class="floating-rune rune-two">✦</div>
+              <div class="hero-book"><div class="book-cover"><span>✎</span></div><div class="book-pages"></div><div class="book-spine"></div></div>
+              <div class="hero-spark spark-one"></div><div class="hero-spark spark-two"></div><div class="hero-spark spark-three"></div>
+            </div>
+          </section>
+
+          <section class="notes-section" aria-labelledby="notes-section-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="notesEyebrow">FIELD NOTES</span></p>
+                <h2 id="notes-section-title" data-i18n="notesTitle">Your notes</h2>
+              </div>
+            </div>
+            <form id="note-form" class="note-form">
+              <div class="note-form-fields">
+                <label>
+                  <span data-i18n="noteNameLabel">Name</span>
+                  <input id="note-name" name="name" type="text" maxlength="80" required />
+                </label>
+                <label class="note-description-field">
+                  <span data-i18n="noteDescriptionLabel">Description</span>
+                  <textarea id="note-description" name="description" maxlength="2000" rows="3" required></textarea>
+                </label>
+              </div>
+              <label class="note-checklist-toggle">
+                <input id="note-checklist-enabled" type="checkbox" />
+                <span data-i18n="noteChecklistToggle">Create a checklist from this note</span>
+              </label>
+              <div id="note-checklist-fields" class="note-checklist-fields" hidden>
+                <label>
+                  <span data-i18n="noteChecklistLabel">Checklist tasks (one per line)</span>
+                  <textarea id="note-checklist" rows="4"></textarea>
+                </label>
+                <p data-i18n="noteChecklistHelp">Each non-empty line becomes a separate task.</p>
+              </div>
+              <button class="primary-button note-save-button" type="submit" data-i18n="noteSave">Save note</button>
+            </form>
+
+            <div class="notes-toolbar">
+              <div id="note-filters" class="category-tabs" role="group" aria-label="Note filter">
+                <button type="button" class="category-tab is-active" data-note-filter="all" aria-pressed="true" data-i18n="noteFilterAll">All notes</button>
+                <button type="button" class="category-tab" data-note-filter="open" aria-pressed="false" data-i18n="noteFilterOpen">Open</button>
+                <button type="button" class="category-tab" data-note-filter="completed" aria-pressed="false" data-i18n="noteFilterCompleted">Completed</button>
+                <button type="button" class="category-tab" data-note-filter="hidden" aria-pressed="false" data-i18n="noteFilterHidden">Hidden</button>
+              </div>
+            </div>
+            <div id="notes-list" class="notes-list" aria-live="polite"></div>
+            <p id="notes-empty-state" class="empty-state" data-i18n="noteEmpty">No notes match this view yet.</p>
           </section>
         </div>
 
@@ -218,14 +305,25 @@
             <div><dt data-i18n="glossaryTemplateTerm">Smithing template</dt><dd data-i18n="glossaryTemplateDefinition"></dd></div>
             <div><dt data-i18n="glossaryArmorTrimTerm">Armor trim</dt><dd data-i18n="glossaryArmorTrimDefinition"></dd></div>
             <div><dt data-i18n="glossaryMusicDiscTerm">Music disc</dt><dd data-i18n="glossaryMusicDiscDefinition"></dd></div>
+            <div><dt data-i18n="glossaryPriorWorkTerm">Prior anvil work</dt><dd data-i18n="glossaryPriorWorkDefinition"></dd></div>
+            <div><dt data-i18n="glossaryNoteTerm">Note</dt><dd data-i18n="glossaryNoteDefinition"></dd></div>
+            <div><dt data-i18n="glossaryNoteChecklistTerm">Note checklist</dt><dd data-i18n="glossaryNoteChecklistDefinition"></dd></div>
+            <div><dt data-i18n="glossaryHiddenEntryTerm">Hidden entry</dt><dd data-i18n="glossaryHiddenEntryDefinition"></dd></div>
+            <div><dt data-i18n="glossaryGearCopyTerm">Gear copy</dt><dd data-i18n="glossaryGearCopyDefinition"></dd></div>
           </dl>
         </section>
       </main>
 
       <footer class="footer">
-        <a class="brand footer-brand" href="#enchantments"><span class="brand-mark" aria-hidden="true">✦</span><span>ENCHANTING <b>DESK</b></span></a>
+        <a class="brand footer-brand" href="#enchantments" aria-label="Collectible Minecraft Companion home"><span class="brand-mark" aria-hidden="true">✦</span><span>CMC</span></a>
         <span data-i18n="footerNote">Your next adventure awaits.</span>
+        <div class="backup-actions" role="group" aria-label="Checklist backup">
+          <button type="button" class="text-button" id="backup-export" data-i18n="backupExport">Export backup</button>
+          <button type="button" class="text-button" id="backup-import" data-i18n="backupImport">Import backup</button>
+          <input id="backup-file" type="file" accept="application/json,.json" hidden />
+        </div>
         <span class="made-by"><span data-i18n="madeBy">Made by</span> <a href="https://github.com/minCoding404" target="_blank" rel="noreferrer" data-i18n="madeByName">minCoding404</a></span>
+        <span class="footer-disclaimer">NOT AN OFFICIAL MINECRAFT SERVICE. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</span>
       </footer>
     </div>
   </body>

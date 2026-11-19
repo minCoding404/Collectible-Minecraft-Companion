@@ -16,14 +16,22 @@ import {
   SUPPORTED_VERSIONS,
   VERSION_PROFILES,
   getCompletedTotal,
+  getAdjustedRecipe,
   getTaskTotal,
   resetItemState,
+  sanitizeChecklistState,
+  sanitizeChecklistLayout,
+  sanitizeCustomItems,
+  sanitizeNotes,
 } from "./data.js";
 
 const STORAGE_KEY = "enchanting-desk.checklist.v1";
 const LANGUAGE_KEY = "enchanting-desk.language";
 const EDITION_KEY = "enchanting-desk.edition";
 const VERSION_KEY = "enchanting-desk.version";
+const CUSTOM_ITEMS_KEY = "enchanting-desk.custom-items.v1";
+const LAYOUT_KEY = "enchanting-desk.layout.v1";
+const NOTES_KEY = "enchanting-desk.notes.v1";
 const grid = document.querySelector("#items-grid");
 const searchInput = document.querySelector("#search-input");
 const emptyState = document.querySelector("#empty-state");
@@ -34,6 +42,18 @@ const resetButtons = document.querySelectorAll(".reset-button");
 const languageSelect = document.querySelector("#language-select");
 const editionSelect = document.querySelector("#edition-select");
 const versionSelect = document.querySelector("#version-select");
+const plannerItemSelect = document.querySelector("#planner-item-select");
+const plannerWorkSelect = document.querySelector("#planner-work-select");
+const plannerOutput = document.querySelector("#planner-output");
+const backupFileInput = document.querySelector("#backup-file");
+const noteForm = document.querySelector("#note-form");
+const noteNameInput = document.querySelector("#note-name");
+const noteChecklistToggle = document.querySelector("#note-checklist-enabled");
+const noteChecklistFields = document.querySelector("#note-checklist-fields");
+const noteChecklistInput = document.querySelector("#note-checklist");
+const noteList = document.querySelector("#notes-list");
+const noteEmptyState = document.querySelector("#notes-empty-state");
+const noteFilterButtons = document.querySelectorAll("[data-note-filter]");
 const storageNotice = document.createElement("p");
 document.querySelector(".progress-panel").after(storageNotice);
 let state = {};
@@ -45,11 +65,19 @@ let collectibleQuery = "";
 let currentPage = "enchantments";
 let edition = "java";
 let selectedVersion = "1.21.11";
+let customItems = [];
+let hiddenItems = new Set();
+let notes = [];
+let noteFilter = "all";
+let itemOrder = [];
+let draggedItemId = "";
+let plannerItemId = RECIPES[0].itemId;
+let plannerPriorWorkCount = 0;
 
 const UI_COPY = {
   en: {
-    title: "Enchanting Desk — Minecraft checklist",
-    metaDescription: "An interactive Minecraft enchantment checklist with exclusive choices and optimized anvil book orders.",
+    title: "Collectible Minecraft Companion (CMC)",
+    metaDescription: "CMC is an interactive Minecraft companion for enchantments, collectibles, notes, and checklists.",
     editionMode: "SURVIVAL MODE",
     languageLabel: "Language",
     navigationLabel: "Main navigation",
@@ -59,6 +87,31 @@ const UI_COPY = {
     bedrockEdition: "Bedrock Edition",
     navEnchantments: "Enchantments",
     navCollectibles: "Collectibles",
+    navNotes: "Notes",
+    notesEyebrow: "FIELD NOTES",
+    notesTitle: "Your notes",
+    notesDescription: "Create dated notes, turn them into checklists, and track when they're complete.",
+    noteNameLabel: "Name",
+    noteCreatedDateLabel: "Created",
+    noteDescriptionLabel: "Description",
+    noteChecklistToggle: "Create a checklist from this note",
+    noteChecklistHeading: "Checklist",
+    noteChecklistLabel: "Checklist tasks (one per line)",
+    noteChecklistHelp: "Each non-empty line becomes a separate task.",
+    noteSave: "Save note",
+    noteSaveError: "Could not save note",
+    noteFilterAll: "All notes",
+    noteFilterOpen: "Open",
+    noteFilterCompleted: "Completed",
+    noteFilterHidden: "Hidden",
+    noteCompletedOn: "Completed on",
+    noteComplete: "Complete note",
+    noteReopen: "Reopen",
+    noteHide: "Hide",
+    noteShow: "Show",
+    noteHidden: "Hidden",
+    noteChecklistProgress: "{done} / {total} tasks",
+    noteEmpty: "No notes match this view yet.",
     heroEyebrow: "YOUR LOADOUT, YOUR PLAN",
     heroTitle: "Build your<br /><span>best</span> gear.",
     heroDescription: "Every slot, every enchantment. Keep your perfect Minecraft loadout in sight.",
@@ -69,6 +122,35 @@ const UI_COPY = {
     progressCaption: "Track your progress in this checklist.",
     checkedLabel: "checked",
     resetProgress: "Reset progress",
+    plannerEyebrow: "ANVIL COST PLANNER",
+    plannerTitle: "Estimate your anvil level cost.",
+    plannerItemLabel: "Item",
+    plannerPriorWorkLabel: "Prior anvil uses",
+    plannerTotal: "Estimated total",
+    plannerAdditional: "additional levels",
+    plannerPriorWorkStep: "+{levels} prior-work levels",
+    plannerNote: "Adds target-item prior work to the guide sequence; source books are assumed unused. Survival/Adventure rejects any single operation costing 40 or more levels.",
+    anvilTooExpensive: "TOO EXPENSIVE — 40+ levels",
+    backupExport: "Export backup",
+    backupImport: "Import backup",
+    backupToolsLabel: "Checklist backup",
+    backupExportSuccess: "Checklist backup downloaded.",
+    backupImportSuccess: "Checklist backup restored.",
+    backupImportConfirm: "Replace this browser's checklist, custom items, and profile with the backup?",
+    backupImportError: "Could not restore backup",
+    backupInvalid: "This file is not a valid CMC backup.",
+    backupVersionUnsupported: "This backup format version is not supported.",
+    backupFileTooLarge: "Backup files must be 1 MB or smaller.",
+    duplicateItem: "Duplicate",
+    renameItem: "Rename",
+    deleteCopy: "Delete copy",
+    copySuffix: "copy",
+    renameCopyPrompt: "Optional name for {item} (leave blank to use the default name):",
+    confirmDeleteCopy: "Delete {item} and its checklist progress?",
+    invalidCopyName: "Names must be 60 characters or fewer.",
+    hideItem: "Hide",
+    unhideItem: "Unhide",
+    dragItem: "Reorder {item}; use arrow keys to move",
     collectionEyebrow: "YOUR COLLECTION",
     collectionTitle: "Enchantments",
     searchLabel: "Search items or enchantments",
@@ -77,6 +159,7 @@ const UI_COPY = {
     categoryArmor: "Armor",
     categoryWeapons: "Weapons",
     categoryTools: "Tools",
+    categoryHiddenItems: "Hidden items",
     categoryCollectibles: "Collectibles",
     collectiblesEyebrow: "EXPLORE AND COLLECT",
     collectiblesTitle: "Smithing templates & music discs",
@@ -86,9 +169,9 @@ const UI_COPY = {
     collectionAll: "All",
     collectionTemplates: "Smithing templates",
     collectionMusic: "Music discs",
+    collectionHidden: "Hidden",
     collectiblesEmptyState: "No collectibles found. Try another search.",
-    guideNote: "Book combinations and level costs are shown on the relevant items. Previous anvil work can increase actual costs.",
-    sourceLink: "Minecraft Wiki: Best enchantments guide",
+    guideNote: "The listed amounts are individual anvil operations. In Survival/Adventure, each operation must cost 39 levels or less; 40+ is rejected. Prior work can increase costs.",
     emptyState: "No items found. Try another search.",
     footerNote: "Your next adventure awaits.",
     optional: "OPTIONAL",
@@ -102,20 +185,29 @@ const UI_COPY = {
     resetItem: "Reset",
     resetItemLabel: "Reset {item} progress",
     foundAt: "FOUND AT",
-    locationSource: "Minecraft Wiki",
     glossaryTitle: "Glossary",
     glossaryEnchantmentTerm: "Enchantment",
     glossaryEnchantmentDefinition: "A special effect applied to gear, usually with an enchanting table or an enchanted book and an anvil.",
     glossaryExclusiveTerm: "Exclusive enchantments",
     glossaryExclusiveDefinition: "Some enchantments cannot be used together on one item. The checklist groups those alternatives so you can select only one.",
     glossaryAnvilTerm: "Anvil cost",
-    glossaryAnvilDefinition: "The experience levels required to combine or apply items. Prior anvil work can raise the cost.",
+    glossaryAnvilDefinition: "The experience levels required for one anvil operation. In Survival/Adventure, costs are capped at 39 levels per operation; 40 or more is rejected.",
     glossaryTemplateTerm: "Smithing template",
     glossaryTemplateDefinition: "A structure-found item used at a smithing table to upgrade diamond gear or add an armor trim.",
     glossaryArmorTrimTerm: "Armor trim",
     glossaryArmorTrimDefinition: "A cosmetic pattern added to armor with a smithing template; its material changes the color, not the armor stats.",
     glossaryMusicDiscTerm: "Music disc",
     glossaryMusicDiscDefinition: "A collectible record played in a jukebox.",
+    glossaryPriorWorkTerm: "Prior anvil work",
+    glossaryPriorWorkDefinition: "Previous operations on an item increase the level cost of later anvil steps.",
+    glossaryNoteTerm: "Note",
+    glossaryNoteDefinition: "A dated entry with a name and description. Completing it records the current date automatically; it can also be hidden.",
+    glossaryNoteChecklistTerm: "Note checklist",
+    glossaryNoteChecklistDefinition: "An optional task list created from non-empty lines in a note; each task is tracked independently.",
+    glossaryHiddenEntryTerm: "Hidden entry",
+    glossaryHiddenEntryDefinition: "An item or note moved out of the regular list. Use its Hidden tab to restore it; hiding never deletes progress.",
+    glossaryGearCopyTerm: "Gear copy",
+    glossaryGearCopyDefinition: "A duplicated gear entry with independent enchantment progress. Copies can be renamed and deleted; original items cannot be deleted.",
     madeBy: "Made by",
     madeByName: "minCoding404",
     storageReadError: "Your browser could not load saved progress",
@@ -144,8 +236,8 @@ const UI_COPY = {
     completionBadgeDescription: "Complete every checklist item in this profile.",
   },
   de: {
-    title: "Enchanting Desk — Minecraft-Checkliste",
-    metaDescription: "Interaktive Minecraft-Verzauberungs-Checkliste mit exklusiven Auswahlmöglichkeiten und optimalen Amboss-Buchreihenfolgen.",
+    title: "Collectible Minecraft Companion (CMC)",
+    metaDescription: "CMC ist dein interaktiver Minecraft-Begleiter für Verzauberungen, Sammlerstücke, Notizen und Checklisten.",
     editionMode: "ÜBERLEBENS-MODUS",
     languageLabel: "Sprache",
     navigationLabel: "Hauptnavigation",
@@ -155,6 +247,31 @@ const UI_COPY = {
     bedrockEdition: "Bedrock Edition",
     navEnchantments: "Verzauberungen",
     navCollectibles: "Sammlerstücke",
+    navNotes: "Notizen",
+    notesEyebrow: "DEINE NOTIZEN",
+    notesTitle: "Deine Notizen",
+    notesDescription: "Erstelle datierte Notizen, mache daraus Checklisten und halte das Abschlussdatum fest.",
+    noteNameLabel: "Name",
+    noteCreatedDateLabel: "Erstellt",
+    noteDescriptionLabel: "Beschreibung",
+    noteChecklistToggle: "Aus dieser Notiz eine Checkliste erstellen",
+    noteChecklistHeading: "Checkliste",
+    noteChecklistLabel: "Checklistenpunkte (einer pro Zeile)",
+    noteChecklistHelp: "Jede nicht leere Zeile wird zu einer eigenen Aufgabe.",
+    noteSave: "Notiz speichern",
+    noteSaveError: "Notiz konnte nicht gespeichert werden",
+    noteFilterAll: "Alle Notizen",
+    noteFilterOpen: "Offen",
+    noteFilterCompleted: "Abgeschlossen",
+    noteFilterHidden: "Verborgen",
+    noteCompletedOn: "Abgeschlossen am",
+    noteComplete: "Notiz abschließen",
+    noteReopen: "Wieder öffnen",
+    noteHide: "Ausblenden",
+    noteShow: "Anzeigen",
+    noteHidden: "Verborgen",
+    noteChecklistProgress: "{done} / {total} Aufgaben",
+    noteEmpty: "Für diese Ansicht gibt es noch keine passenden Notizen.",
     heroEyebrow: "DEIN LOADOUT, DEIN PLAN",
     heroTitle: "Mach dein<br /><span>bestes</span> Gear.",
     heroDescription: "Jeder Slot, jede Verzauberung. Behalte dein perfektes Minecraft-Loadout im Blick.",
@@ -165,6 +282,35 @@ const UI_COPY = {
     progressCaption: "Behalte den Fortschritt dieser Checkliste im Blick.",
     checkedLabel: "abgehakt",
     resetProgress: "Fortschritt zurücksetzen",
+    plannerEyebrow: "AMBOSSKOSTEN-PLANER",
+    plannerTitle: "Schätze deine Ambosskosten.",
+    plannerItemLabel: "Item",
+    plannerPriorWorkLabel: "Vorherige Ambossarbeiten",
+    plannerTotal: "Geschätzte Gesamtkosten",
+    plannerAdditional: "zusätzliche Level",
+    plannerPriorWorkStep: "+{levels} Level Vorarbeit",
+    plannerNote: "Ergänzt die Vorarbeit des Ziel-Items zur Guide-Reihenfolge; Bücher gelten als unbenutzt. In Überleben/Abenteuer werden einzelne Arbeiten ab 40 Leveln abgelehnt.",
+    anvilTooExpensive: "ZU TEUER — 40+ Level",
+    backupExport: "Backup exportieren",
+    backupImport: "Backup importieren",
+    backupToolsLabel: "Checklisten-Backup",
+    backupExportSuccess: "Checklisten-Backup heruntergeladen.",
+    backupImportSuccess: "Checklisten-Backup wiederhergestellt.",
+    backupImportConfirm: "Die Checkliste, eigenen Items und das Profil dieses Browsers durch das Backup ersetzen?",
+    backupImportError: "Backup konnte nicht wiederhergestellt werden",
+    backupInvalid: "Diese Datei ist kein gültiges CMC-Backup.",
+    backupVersionUnsupported: "Diese Backup-Formatversion wird nicht unterstützt.",
+    backupFileTooLarge: "Backups dürfen höchstens 1 MB groß sein.",
+    duplicateItem: "Duplizieren",
+    renameItem: "Umbenennen",
+    deleteCopy: "Kopie löschen",
+    copySuffix: "Kopie",
+    renameCopyPrompt: "Optionaler Name für {item} (leer lassen für den Standardnamen):",
+    confirmDeleteCopy: "{item} und den zugehörigen Checklisten-Fortschritt löschen?",
+    invalidCopyName: "Namen dürfen höchstens 60 Zeichen lang sein.",
+    hideItem: "Ausblenden",
+    unhideItem: "Einblenden",
+    dragItem: "{item} neu anordnen; mit Pfeiltasten verschieben",
     collectionEyebrow: "DEINE SAMMLUNG",
     collectionTitle: "Verzauberungen",
     searchLabel: "Items oder Verzauberungen suchen",
@@ -173,6 +319,7 @@ const UI_COPY = {
     categoryArmor: "Rüstung",
     categoryWeapons: "Waffen",
     categoryTools: "Werkzeuge",
+    categoryHiddenItems: "Verborgene Items",
     categoryCollectibles: "Sammlerstücke",
     collectiblesEyebrow: "ENTDECKEN UND SAMMELN",
     collectiblesTitle: "Schmiedevorlagen & Schallplatten",
@@ -182,9 +329,9 @@ const UI_COPY = {
     collectionAll: "Alle",
     collectionTemplates: "Schmiedevorlagen",
     collectionMusic: "Schallplatten",
+    collectionHidden: "Verborgene",
     collectiblesEmptyState: "Keine Sammlerstücke gefunden. Versuch einen anderen Suchbegriff.",
-    guideNote: "Buch-Kombinationen und ihre Levelkosten findest du direkt beim jeweiligen Item. Vorarbeit am Amboss kann die tatsächlichen Kosten erhöhen.",
-    sourceLink: "Minecraft Wiki: Verzauberungs-Guide",
+    guideNote: "Die Angaben sind einzelne Ambossarbeiten. In Überleben/Abenteuer darf jede Arbeit höchstens 39 Level kosten; ab 40 wird sie abgelehnt. Vorarbeit kann die Kosten erhöhen.",
     emptyState: "Keine Items gefunden. Versuch einen anderen Suchbegriff.",
     footerNote: "Dein nächstes Abenteuer wartet.",
     optional: "OPTIONAL",
@@ -198,20 +345,29 @@ const UI_COPY = {
     resetItem: "Zurücksetzen",
     resetItemLabel: "Fortschritt für {item} zurücksetzen",
     foundAt: "FUNDORT",
-    locationSource: "Minecraft-Wiki",
     glossaryTitle: "Glossar",
     glossaryEnchantmentTerm: "Verzauberung",
     glossaryEnchantmentDefinition: "Ein besonderer Effekt für Ausrüstung, meist angewendet am Zaubertisch oder mit einem verzauberten Buch und Amboss.",
     glossaryExclusiveTerm: "Unvereinbare Verzauberungen",
     glossaryExclusiveDefinition: "Manche Verzauberungen können nicht gemeinsam auf einem Item liegen. Die Checkliste bündelt solche Alternativen zur Einzelauswahl.",
     glossaryAnvilTerm: "Ambosskosten",
-    glossaryAnvilDefinition: "Die benötigten Erfahrungslevel zum Kombinieren oder Anwenden von Items. Vorherige Ambossarbeit kann die Kosten erhöhen.",
+    glossaryAnvilDefinition: "Die Erfahrungslevel für eine Ambossarbeit. In Überleben/Abenteuer gilt ein Limit von 39 Leveln pro Arbeit; ab 40 wird sie abgelehnt.",
     glossaryTemplateTerm: "Schmiedevorlage",
     glossaryTemplateDefinition: "Ein in Strukturen gefundenes Item, das am Schmiedetisch zum Aufwerten von Diamantausrüstung oder für Rüstungsverzierungen dient.",
     glossaryArmorTrimTerm: "Rüstungsverzierung",
     glossaryArmorTrimDefinition: "Ein kosmetisches Muster, das mit einer Schmiedevorlage auf Rüstung kommt. Das Material ändert die Farbe, nicht die Rüstungswerte.",
     glossaryMusicDiscTerm: "Schallplatte",
     glossaryMusicDiscDefinition: "Ein sammelbarer Tonträger, der in einer Musikbox abgespielt wird.",
+    glossaryPriorWorkTerm: "Vorarbeit am Amboss",
+    glossaryPriorWorkDefinition: "Vorherige Ambossarbeiten an einem Item erhöhen die Levelkosten späterer Arbeitsschritte.",
+    glossaryNoteTerm: "Notiz",
+    glossaryNoteDefinition: "Ein datierter Eintrag mit Name und Beschreibung. Beim Abschließen wird das aktuelle Datum automatisch gespeichert; die Notiz kann auch verborgen werden.",
+    glossaryNoteChecklistTerm: "Notiz-Checkliste",
+    glossaryNoteChecklistDefinition: "Eine optionale Aufgabenliste aus nicht leeren Zeilen einer Notiz; jede Aufgabe wird separat gespeichert.",
+    glossaryHiddenEntryTerm: "Verborgener Eintrag",
+    glossaryHiddenEntryDefinition: "Ein Item oder eine Notiz außerhalb der normalen Liste. Im Tab „Verborgen“ kann es wieder eingeblendet werden; der Fortschritt bleibt erhalten.",
+    glossaryGearCopyTerm: "Ausrüstungskopie",
+    glossaryGearCopyDefinition: "Ein dupliziertes Gear-Item mit eigenständigem Verzauberungsfortschritt. Kopien lassen sich umbenennen und löschen, Originale nicht.",
     madeBy: "Erstellt von",
     madeByName: "minCoding404",
     storageReadError: "Dein Browser konnte den gespeicherten Fortschritt nicht laden",
@@ -292,6 +448,87 @@ function getAvailableItems(items) {
   });
 }
 
+function sortItems(items) {
+  const positions = new Map(itemOrder.map((itemId, index) => [itemId, index]));
+  const originalPositions = new Map(items.map((item, index) => [item.id, index]));
+  return [...items].sort((first, second) => {
+    const firstPosition = positions.get(first.id) ?? Number.MAX_SAFE_INTEGER;
+    const secondPosition = positions.get(second.id) ?? Number.MAX_SAFE_INTEGER;
+    return firstPosition - secondPosition || originalPositions.get(first.id) - originalPositions.get(second.id);
+  });
+}
+
+function getAllOrderedItems() {
+  const copies = customItems.map((customItem) => ({
+    ...ITEMS.find((item) => item.id === customItem.sourceId),
+    id: customItem.id,
+    baseItemId: customItem.sourceId,
+    customItemId: customItem.id,
+    customName: customItem.customName,
+    copyNumber: customItem.copyNumber,
+  }));
+  return sortItems([...ITEMS, ...COLLECTIBLES, ...copies]);
+}
+
+function persistLayout(nextHiddenItems, nextOrder, nextCustomItems = customItems) {
+  try {
+    const layout = sanitizeChecklistLayout({
+      hidden: [...nextHiddenItems],
+      order: nextOrder,
+    }, nextCustomItems);
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+    hiddenItems = new Set(layout.hidden);
+    itemOrder = layout.order;
+    showStorageNotice("");
+    return true;
+  } catch (error) {
+    showStorageNotice(`${copy().storageWriteError}: ${error.message}`);
+    return false;
+  }
+}
+
+function getAvailableGearItems() {
+  const availableItems = getAvailableItems(ITEMS);
+  const itemsById = new Map(availableItems.map((item) => [item.id, item]));
+  const copies = customItems.flatMap((customItem) => {
+    const source = itemsById.get(customItem.sourceId);
+    return source ? [{
+      ...source,
+      id: customItem.id,
+      baseItemId: customItem.sourceId,
+      customItemId: customItem.id,
+      customName: customItem.customName,
+      copyNumber: customItem.copyNumber,
+    }] : [];
+  });
+  return sortItems([...availableItems, ...copies]);
+}
+
+function getItemById(itemId) {
+  const item = [...ITEMS, ...COLLECTIBLES].find((entry) => entry.id === itemId);
+  if (item) return item;
+  const customItem = customItems.find((entry) => entry.id === itemId);
+  const source = customItem && ITEMS.find((entry) => entry.id === customItem.sourceId);
+  return source ? {
+    ...source,
+    id: customItem.id,
+    baseItemId: source.id,
+    customItemId: customItem.id,
+    customName: customItem.customName,
+    copyNumber: customItem.copyNumber,
+    materials: MATERIALS[source.id] ?? [],
+  } : null;
+}
+
+function itemDisplayName(item) {
+  if (item.customItemId) {
+    if (item.customName) return item.customName;
+    const sourceName = language === "de" ? ITEMS.find((entry) => entry.id === item.baseItemId).name : ITEMS.find((entry) => entry.id === item.baseItemId).english;
+    return `${sourceName} (${copy().copySuffix} ${item.copyNumber})`;
+  }
+  return language === "de" ? item.name : item.english;
+}
+
 function renderVersionOptions() {
   const profiles = VERSION_PROFILES[edition];
   if (!profiles.some((profile) => profile.version === selectedVersion)) selectedVersion = profiles[0].version;
@@ -314,13 +551,47 @@ function readState() {
     const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
     const savedEdition = localStorage.getItem(EDITION_KEY);
     const savedVersion = localStorage.getItem(VERSION_KEY);
+    const savedCustomItems = localStorage.getItem(CUSTOM_ITEMS_KEY);
+    const savedLayout = localStorage.getItem(LAYOUT_KEY);
+    const savedNotes = localStorage.getItem(NOTES_KEY);
     state = saved ? JSON.parse(saved) : {};
+    if (savedCustomItems) {
+      try {
+        customItems = sanitizeCustomItems(JSON.parse(savedCustomItems));
+      } catch (error) {
+        customItems = [];
+        showStorageNotice(`${copy().storageReadError}: ${error.message}`);
+      }
+    }
+    if (savedLayout) {
+      try {
+        const layout = sanitizeChecklistLayout(JSON.parse(savedLayout), customItems);
+        hiddenItems = new Set(layout.hidden);
+        itemOrder = layout.order;
+      } catch (error) {
+        hiddenItems = new Set();
+        itemOrder = [];
+        showStorageNotice(`${copy().storageReadError}: ${error.message}`);
+      }
+    }
+    if (savedNotes) {
+      try {
+        notes = sanitizeNotes(JSON.parse(savedNotes));
+      } catch (error) {
+        notes = [];
+        showStorageNotice(`${copy().storageReadError}: ${error.message}`);
+      }
+    }
     if (!state || typeof state !== "object" || Array.isArray(state)) state = {};
     if (savedLanguage === "de" || savedLanguage === "en") language = savedLanguage;
     if (savedEdition === "java" || savedEdition === "bedrock") edition = savedEdition;
     if (SUPPORTED_VERSIONS.includes(savedVersion)) selectedVersion = savedVersion;
   } catch (error) {
     state = {};
+    customItems = [];
+    hiddenItems = new Set();
+    notes = [];
+    itemOrder = [];
     showStorageNotice(`${copy().storageReadError}: ${error.message}`);
   }
 }
@@ -353,6 +624,59 @@ function saveProfile() {
   }
 }
 
+function persistCustomItems(items) {
+  try {
+    localStorage.setItem(CUSTOM_ITEMS_KEY, JSON.stringify(items));
+    showStorageNotice("");
+    return true;
+  } catch (error) {
+    showStorageNotice(`${copy().storageWriteError}: ${error.message}`);
+    return false;
+  }
+}
+
+function persistNotes(nextNotes) {
+  try {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(nextNotes));
+    showStorageNotice("");
+    return true;
+  } catch (error) {
+    showStorageNotice(`${copy().storageWriteError}: ${error.message}`);
+    return false;
+  }
+}
+
+function persistBackup(progress, items, layout, savedNotes, preferences) {
+  const updates = [
+    [STORAGE_KEY, JSON.stringify(progress)],
+    [CUSTOM_ITEMS_KEY, JSON.stringify(items)],
+    [LAYOUT_KEY, JSON.stringify(layout)],
+    [NOTES_KEY, JSON.stringify(savedNotes)],
+    [LANGUAGE_KEY, preferences.language],
+    [EDITION_KEY, preferences.edition],
+    [VERSION_KEY, preferences.version],
+  ];
+  const previous = [];
+  try {
+    for (const [key] of updates) previous.push([key, localStorage.getItem(key)]);
+    for (const [key, value] of updates) localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    const rollbackErrors = [];
+    for (const [key, value] of previous) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError.message);
+      }
+    }
+    const rollbackNote = rollbackErrors.length ? ` (${rollbackErrors.join("; ")})` : "";
+    showStorageNotice(`${copy().storageWriteError}: ${error.message}${rollbackNote}`);
+    return false;
+  }
+}
+
 function translateStaticText() {
   const text = copy();
   document.documentElement.lang = language;
@@ -374,10 +698,12 @@ function translateStaticText() {
   editionSelect.setAttribute("aria-label", text.editionLabel);
   versionSelect.setAttribute("aria-label", text.versionLabel);
   document.querySelector(".site-navigation").setAttribute("aria-label", text.navigationLabel);
+  document.querySelector(".backup-actions").setAttribute("aria-label", text.backupToolsLabel);
   document.querySelectorAll(".progress-panel").forEach((panel) => panel.setAttribute("aria-label", text.progressAria));
   document.querySelectorAll(".progress-track").forEach((track) => track.setAttribute("aria-label", text.progressAria));
-  document.querySelector("#category-tabs").setAttribute("aria-label", `${text.navEnchantments}: ${text.categoryAll}, ${text.categoryArmor}, ${text.categoryWeapons}, ${text.categoryTools}`);
-  document.querySelector("#collectible-tabs").setAttribute("aria-label", `${text.navCollectibles}: ${text.collectionAll}, ${text.collectionTemplates}, ${text.collectionMusic}`);
+  document.querySelector("#category-tabs").setAttribute("aria-label", `${text.navEnchantments}: ${text.categoryAll}, ${text.categoryArmor}, ${text.categoryWeapons}, ${text.categoryTools}, ${text.categoryHiddenItems}`);
+  document.querySelector("#collectible-tabs").setAttribute("aria-label", `${text.navCollectibles}: ${text.collectionAll}, ${text.collectionTemplates}, ${text.collectionMusic}, ${text.collectionHidden}`);
+  document.querySelector("#note-filters").setAttribute("aria-label", `${text.navNotes}: ${text.noteFilterAll}, ${text.noteFilterOpen}, ${text.noteFilterCompleted}, ${text.noteFilterHidden}`);
 }
 
 function selectLanguage(value) {
@@ -386,6 +712,7 @@ function selectLanguage(value) {
   translateStaticText();
   renderCards();
   renderCollectibleCards();
+  renderNotes();
   saveLanguage();
 }
 
@@ -399,6 +726,75 @@ function escapeHTML(value) {
   })[character]);
 }
 
+function getLocalDate() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatNoteDate(value) {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00Z`);
+  return new Intl.DateTimeFormat(language === "de" ? "de-DE" : "en-US", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function renderNotes() {
+  noteFilterButtons.forEach((button) => {
+    const active = button.dataset.noteFilter === noteFilter;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+
+  const visibleNotes = [...notes]
+    .filter((note) => noteFilter === "hidden" ? note.hidden : !note.hidden)
+    .filter((note) => noteFilter === "all" || noteFilter === "hidden"
+      || (noteFilter === "completed" ? Boolean(note.completedDate) : !note.completedDate))
+    .sort((first, second) => second.createdDate.localeCompare(first.createdDate)
+      || Number(second.id.slice(5)) - Number(first.id.slice(5)));
+  noteList.innerHTML = visibleNotes.map((note) => {
+    const completed = Boolean(note.completedDate);
+    const doneTasks = note.checklist.filter((task) => task.done).length;
+    const checklist = note.checklist.length ? `
+      <div class="note-checklist">
+        <div class="note-checklist-heading"><strong>${copy().noteChecklistHeading}</strong><span>${copy().noteChecklistProgress.replace("{done}", String(doneTasks)).replace("{total}", String(note.checklist.length))}</span></div>
+        ${note.checklist.map((task, index) => `
+          <label class="note-checklist-task${task.done ? " is-done" : ""}">
+            <input type="checkbox" data-note-task="${note.id}" data-note-task-index="${index}" ${task.done ? "checked" : ""} />
+            <span>${escapeHTML(task.text)}</span>
+          </label>`).join("")}
+      </div>` : "";
+    const status = `${note.hidden ? `${copy().noteHidden} · ` : ""}${completed ? copy().noteFilterCompleted : copy().noteFilterOpen}`;
+    return `
+      <article class="note-card${completed ? " is-completed" : ""}${note.hidden ? " is-hidden" : ""}" data-note-card="${note.id}">
+        <div class="note-card-heading">
+          <div>
+            <h3 class="note-card-title">${escapeHTML(note.name)}</h3>
+            <div class="note-card-meta"><span>${copy().noteCreatedDateLabel}: ${formatNoteDate(note.createdDate)}</span>${completed ? `<span>${copy().noteCompletedOn}: ${formatNoteDate(note.completedDate)}</span>` : ""}<span class="note-status">${status}</span></div>
+          </div>
+        </div>
+        <p class="note-card-description">${escapeHTML(note.description)}</p>
+        ${checklist}
+        <div class="note-card-footer">
+          <div class="note-completion"><button type="button" class="text-button" data-note-complete="${note.id}">${completed ? copy().noteReopen : copy().noteComplete}</button></div>
+          <div class="note-card-actions">
+            <button type="button" class="text-button" data-note-visibility="${note.id}">${note.hidden ? copy().noteShow : copy().noteHide}</button>
+          </div>
+        </div>
+      </article>`;
+  }).join("");
+  noteEmptyState.hidden = visibleNotes.length !== 0;
+}
+
+function updateNote(noteId, updater) {
+  const nextNotes = notes.map((note) => note.id === noteId ? updater(note) : note);
+  if (!persistNotes(nextNotes)) return false;
+  notes = nextNotes;
+  renderNotes();
+  return true;
+}
+
 function itemState(item) {
   if (!state[item.id] || typeof state[item.id] !== "object") state[item.id] = { tasks: {}, choices: {} };
   if (!state[item.id].tasks || typeof state[item.id].tasks !== "object") state[item.id].tasks = {};
@@ -410,6 +806,7 @@ function itemSearchText(item) {
   return [
     item.name,
     item.english,
+    item.customName,
     ...item.tasks.flatMap((task) => [task.name, task.english]),
     ...(item.choices ?? []).flatMap((choice) => [choice.label, ...choice.options.flatMap((option) => [option.name, option.english])]),
     ...(item.netheriteUpgrade ? ["diamond", "netherite", "diamant", "netherit"] : []),
@@ -497,9 +894,49 @@ function renderRecipe(recipe) {
           <span class="recipe-kicker">${copy().bookCombination}</span>
           <span class="recipe-total"><strong>${recipe.levels}</strong> ${copy().levelsFromGuide}</span>
         </div>
-        <ol>${recipe.sequence.map((step) => `<li><span>${escapeHTML(language === "de" ? step.description : step.descriptionEn)}</span><strong>${step.cost} ${language === "de" ? "Level" : "levels"}</strong></li>`).join("")}</ol>
+        <ol>${recipe.sequence.map((step) => {
+    const tooExpensive = step.cost >= 40;
+    return `<li class="${tooExpensive ? "is-too-expensive" : ""}"><span>${escapeHTML(language === "de" ? step.description : step.descriptionEn)}</span><strong>${step.cost} ${language === "de" ? "Level" : "levels"}${tooExpensive ? `<small class="anvil-warning">${copy().anvilTooExpensive}</small>` : ""}</strong></li>`;
+  }).join("")}</ol>
         ${recipe.note ? `<p class="recipe-note">${escapeHTML(language === "de" ? recipe.note : recipe.noteEn)}</p>` : ""}
       </section>`;
+}
+
+function renderAnvilPlanner() {
+  const recipes = RECIPES.filter((recipe) => !recipe.editions || recipe.editions.includes(edition));
+  if (!recipes.some((recipe) => recipe.itemId === plannerItemId)) plannerItemId = recipes[0]?.itemId ?? "";
+  plannerItemSelect.innerHTML = recipes.map((recipe) => {
+    const item = ITEMS.find((entry) => entry.id === recipe.itemId);
+    const name = language === "de" ? item.name : item.english;
+    return `<option value="${recipe.itemId}">${escapeHTML(name)}</option>`;
+  }).join("");
+  plannerItemSelect.value = plannerItemId;
+  plannerWorkSelect.innerHTML = Array.from({ length: 6 }, (_, count) => {
+    const label = language === "de"
+      ? `${count} ${count === 1 ? "Vorarbeit" : "Vorarbeiten"}`
+      : `${count} ${count === 1 ? "prior use" : "prior uses"}`;
+    return `<option value="${count}">${label}</option>`;
+  }).join("");
+  plannerWorkSelect.value = String(plannerPriorWorkCount);
+  const recipe = recipes.find((entry) => entry.itemId === plannerItemId);
+  if (!recipe) {
+    plannerOutput.innerHTML = "";
+    return;
+  }
+  const adjusted = getAdjustedRecipe(recipe, plannerPriorWorkCount);
+  const levelLabel = language === "de" ? "Level" : "levels";
+  plannerOutput.innerHTML = `
+    <div class="planner-result-summary">
+      <div><span class="planner-total-label">${copy().plannerTotal}</span><strong>${adjusted.levels} ${levelLabel}</strong></div>
+      <span class="planner-breakdown">${adjusted.baseLevels} + ${adjusted.additionalLevels} ${copy().plannerAdditional}</span>
+    </div>
+    <ol class="planner-step-list">${adjusted.sequence.map((step) => {
+      const tooExpensive = step.adjustedCost >= 40;
+      return `
+      <li class="${tooExpensive ? "is-too-expensive" : ""}"><span>${escapeHTML(language === "de" ? step.description : step.descriptionEn)}</span>
+        <strong>${step.adjustedCost} ${levelLabel}${step.additionalCost ? `<small>${escapeHTML(copy().plannerPriorWorkStep.replace("{levels}", String(step.additionalCost)))}</small>` : ""}${tooExpensive ? `<small class="anvil-warning">${copy().anvilTooExpensive}</small>` : ""}</strong>
+      </li>`;
+    }).join("")}</ol>`;
 }
 
 function renderItem(item) {
@@ -507,21 +944,30 @@ function renderItem(item) {
   const upgrade = renderNetheriteUpgrade(item);
   const choices = (item.choices ?? []).map((choice) => renderChoice(item, choice)).join("");
   const materials = `${renderMaterials(item, "crafting")}${renderMaterials(item, "smithing")}`;
-    const recipe = RECIPES.find((entry) => entry.itemId === item.id);
+    const recipe = RECIPES.find((entry) => entry.itemId === (item.baseItemId ?? item.id)
+      && (!entry.editions || entry.editions.includes(edition)));
   const taskCount = item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade)) + (item.materials?.length ?? 0);
   const done = getCompletedTotal(state, [item]);
   const progress = taskCount ? Math.round((done / taskCount) * 100) : 0;
   const categoryName = (language === "de" ? CATEGORIES : CATEGORIES_EN)[item.category];
-  const itemName = language === "de" ? item.name : item.english;
+  const itemName = itemDisplayName(item);
+  const isHidden = hiddenItems.has(item.id);
+  const itemActions = `
+    <button type="button" class="item-drag-handle" draggable="true" data-drag-item="${item.id}" aria-label="${escapeHTML(copy().dragItem.replace("{item}", itemName))}" title="${escapeHTML(copy().dragItem.replace("{item}", itemName))}">⋮⋮</button>
+    ${!item.collectionType ? `<button type="button" class="item-action-button" data-duplicate-item="${item.baseItemId ?? item.id}">${copy().duplicateItem}</button>` : ""}
+    ${item.customItemId ? `
+      <button type="button" class="item-action-button" data-rename-item="${item.id}">${copy().renameItem}</button>
+      <button type="button" class="item-action-button item-delete-copy" data-delete-copy="${item.id}">${copy().deleteCopy}</button>
+    ` : ""}
+    <button type="button" class="item-action-button" data-${isHidden ? "unhide" : "hide"}-item="${item.id}">${isHidden ? copy().unhideItem : copy().hideItem}</button>`;
   const location = language === "de" ? item.location : item.locationEn;
   const locationInfo = location ? `
       <div class="item-location">
         <span class="location-label">${copy().foundAt}</span>
         <p>${escapeHTML(location)}</p>
-        <a href="${escapeHTML(item.sourceUrl)}" target="_blank" rel="noreferrer">${copy().locationSource} ↗</a>
       </div>` : "";
   return `
-    <article class="item-card${progress > 0 ? " has-enchantment" : ""}" data-item-card="${item.id}">
+    <article class="item-card${progress > 0 ? " has-enchantment" : ""}${isHidden ? " is-hidden" : ""}" data-item-card="${item.id}"${item.customItemId ? ' data-item-copy="true"' : ""}>
       <div class="item-card-top">
         <div class="item-art" data-glyph="${escapeHTML(item.glyph)}">
           <span class="item-fallback" aria-hidden="true">${escapeHTML(item.glyph)}</span>
@@ -538,6 +984,7 @@ function renderItem(item) {
           <button type="button" class="item-reset-button" data-reset-item="${item.id}" aria-label="${escapeHTML(copy().resetItemLabel.replace("{item}", itemName))}" ${done === 0 ? "disabled" : ""}>${copy().resetItem}</button>
         </div>
       </div>
+      <div class="item-custom-actions">${itemActions}</div>
       <div class="item-progress-track"><span style="width:${progress}%"></span></div>
       ${locationInfo}
       <div class="enchantment-list">${tasks}${upgrade}</div>
@@ -547,8 +994,16 @@ function renderItem(item) {
     </article>`;
 }
 
+function getActiveItems(items) {
+  return items.filter((item) => !hiddenItems.has(item.id));
+}
+
 function renderCards() {
-  const filtered = getAvailableItems(ITEMS).filter((item) => (category === "all" || item.category === category) && itemSearchText(item).includes(query));
+  const filtered = getAvailableGearItems()
+    .filter((item) => category === "hidden"
+      ? hiddenItems.has(item.id)
+      : !hiddenItems.has(item.id) && (category === "all" || item.category === category))
+    .filter((item) => itemSearchText(item).includes(query));
   grid.innerHTML = filtered.map(renderItem).join("");
   emptyState.hidden = filtered.length !== 0;
   grid.hidden = filtered.length === 0;
@@ -560,10 +1015,15 @@ function renderCards() {
   });
   updateProgress();
   updateCategoryCounts();
+  renderAnvilPlanner();
 }
 
 function renderCollectibleCards() {
-  const filtered = getAvailableItems(COLLECTIBLES).filter((item) => (collectibleType === "all" || item.collectionType === collectibleType) && itemSearchText(item).includes(collectibleQuery));
+  const filtered = sortItems(getAvailableItems(COLLECTIBLES))
+    .filter((item) => collectibleType === "hidden"
+      ? hiddenItems.has(item.id)
+      : !hiddenItems.has(item.id) && (collectibleType === "all" || item.collectionType === collectibleType))
+    .filter((item) => itemSearchText(item).includes(collectibleQuery));
   collectibleGrid.innerHTML = filtered.map(renderItem).join("");
   collectibleEmptyState.hidden = filtered.length !== 0;
   collectibleGrid.hidden = filtered.length === 0;
@@ -579,7 +1039,7 @@ function renderCollectibleCards() {
 
 function updateProgress() {
   document.querySelectorAll(".progress-panel").forEach((panel) => {
-    const items = getAvailableItems(panel.dataset.progressScope === "collectibles" ? COLLECTIBLES : ITEMS);
+    const items = getActiveItems(panel.dataset.progressScope === "collectibles" ? getAvailableItems(COLLECTIBLES) : getAvailableGearItems());
     const total = getTaskTotal(items);
     const completed = getCompletedTotal(state, items);
     const percent = total ? Math.round((completed / total) * 100) : 0;
@@ -595,20 +1055,27 @@ function updateProgress() {
 }
 
 function updateCategoryCounts() {
-  const gearItems = getAvailableItems(ITEMS);
-  const collectibles = getAvailableItems(COLLECTIBLES);
-  for (const key of ["all", "armor", "weapons", "tools"]) {
+  const allGearItems = getAvailableGearItems();
+  const allCollectibles = getAvailableItems(COLLECTIBLES);
+  const gearItems = getActiveItems(allGearItems);
+  const collectibles = getActiveItems(allCollectibles);
+  for (const key of ["all", "armor", "weapons", "tools", "hidden"]) {
+    if (key === "hidden") {
+      document.querySelector(`[data-count="${key}"]`).textContent = String(allGearItems.filter((item) => hiddenItems.has(item.id)).length);
+      continue;
+    }
     const count = key === "all" ? gearItems.length : gearItems.filter((item) => item.category === key).length;
     document.querySelector(`[data-count="${key}"]`).textContent = String(count);
   }
   document.querySelector('[data-collectible-count="all"]').textContent = String(collectibles.length);
   document.querySelector('[data-collectible-count="templates"]').textContent = String(collectibles.filter((item) => item.collectionType === "templates").length);
   document.querySelector('[data-collectible-count="music"]').textContent = String(collectibles.filter((item) => item.collectionType === "music").length);
+  document.querySelector('[data-collectible-count="hidden"]').textContent = String(allCollectibles.filter((item) => hiddenItems.has(item.id)).length);
 }
 
 function updateAchievements() {
-  const gearItems = getAvailableItems(ITEMS);
-  const collectibles = getAvailableItems(COLLECTIBLES);
+  const gearItems = getActiveItems(getAvailableGearItems());
+  const collectibles = getActiveItems(getAvailableItems(COLLECTIBLES));
   const allItems = [...gearItems, ...collectibles];
   const completed = getCompletedTotal(state, allItems);
   const total = getTaskTotal(allItems);
@@ -640,7 +1107,7 @@ function updateAchievements() {
 function onGridChange(event) {
   const input = event.target;
   if (!(input instanceof HTMLInputElement)) return;
-  const item = [...ITEMS, ...COLLECTIBLES].find((entry) => entry.id === input.dataset.item);
+  const item = getItemById(input.dataset.item);
   if (!item) return;
   const saved = itemState(item);
   if (input.type === "checkbox") {
@@ -690,10 +1157,14 @@ collectibleSearchInput.addEventListener("input", () => {
 });
 
 function updatePage() {
-  currentPage = location.hash === "#collectibles" ? "collectibles" : "enchantments";
+  currentPage = location.hash === "#collectibles" ? "collectibles" : location.hash === "#notes" ? "notes" : "enchantments";
   const collectiblesPage = currentPage === "collectibles";
-  document.querySelector("#enchantments-page").hidden = collectiblesPage;
+  const notesPage = currentPage === "notes";
+  document.querySelector("#enchantments-page").hidden = collectiblesPage || notesPage;
   document.querySelector("#collectibles-page").hidden = !collectiblesPage;
+  document.querySelector("#notes-page").hidden = !notesPage;
+  document.querySelector(".achievement-section").hidden = notesPage;
+  document.querySelector(".glossary-section").hidden = notesPage;
   document.querySelectorAll(".site-nav-link").forEach((link) => {
     const active = link.hash === `#${currentPage}`;
     if (active) link.setAttribute("aria-current", "page");
@@ -731,8 +1202,8 @@ collectibleGrid.addEventListener("change", onGridChange);
 function onItemReset(event) {
   const button = event.target.closest("button[data-reset-item]");
   if (!button) return;
-  const item = [...ITEMS, ...COLLECTIBLES].find((entry) => entry.id === button.dataset.resetItem);
-  if (!item || !window.confirm(copy().confirmResetItem.replace("{item}", language === "de" ? item.name : item.english))) return;
+  const item = getItemById(button.dataset.resetItem);
+  if (!item || !window.confirm(copy().confirmResetItem.replace("{item}", itemDisplayName(item)))) return;
   state = resetItemState(state, item.id);
   saveState();
   renderCards();
@@ -742,6 +1213,218 @@ function onItemReset(event) {
 grid.addEventListener("click", onItemReset);
 collectibleGrid.addEventListener("click", onItemReset);
 
+function moveItem(sourceId, targetId, placeAfter) {
+  const order = getAllOrderedItems().map((item) => item.id);
+  const sourceIndex = order.indexOf(sourceId);
+  if (sourceIndex < 0 || !order.includes(targetId) || sourceId === targetId) return false;
+  order.splice(sourceIndex, 1);
+  const targetIndex = order.indexOf(targetId);
+  order.splice(targetIndex + Number(placeAfter), 0, sourceId);
+  if (!persistLayout(hiddenItems, order)) return false;
+  renderCards();
+  renderCollectibleCards();
+  return true;
+}
+
+function attachItemOrdering(container) {
+  container.addEventListener("dragstart", (event) => {
+    const handle = event.target.closest("button[data-drag-item]");
+    if (!handle || !event.dataTransfer) return;
+    draggedItemId = handle.dataset.dragItem;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggedItemId);
+  });
+  container.addEventListener("dragover", (event) => {
+    const card = event.target.closest("[data-item-card]");
+    if (!draggedItemId || !card || card.dataset.itemCard === draggedItemId) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".item-card.drop-target").forEach((target) => target.classList.remove("drop-target"));
+    card.classList.add("drop-target");
+  });
+  container.addEventListener("drop", (event) => {
+    const card = event.target.closest("[data-item-card]");
+    if (!draggedItemId || !card || card.dataset.itemCard === draggedItemId) return;
+    event.preventDefault();
+    const bounds = card.getBoundingClientRect();
+    moveItem(draggedItemId, card.dataset.itemCard, event.clientY > bounds.top + bounds.height / 2);
+    draggedItemId = "";
+  });
+  container.addEventListener("dragend", () => {
+    draggedItemId = "";
+    document.querySelectorAll(".item-card.drop-target").forEach((card) => card.classList.remove("drop-target"));
+  });
+  container.addEventListener("keydown", (event) => {
+    const handle = event.target.closest("button[data-drag-item]");
+    if (!handle || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const cards = [...container.querySelectorAll("[data-item-card]")];
+    const index = cards.findIndex((card) => card.dataset.itemCard === handle.dataset.dragItem);
+    const target = cards[index + (event.key === "ArrowUp" ? -1 : 1)];
+    if (!target) return;
+    event.preventDefault();
+    moveItem(handle.dataset.dragItem, target.dataset.itemCard, event.key === "ArrowDown");
+  });
+}
+
+attachItemOrdering(grid);
+attachItemOrdering(collectibleGrid);
+
+function onItemAction(event) {
+  const visibilityButton = event.target.closest("button[data-hide-item], button[data-unhide-item]");
+  if (visibilityButton) {
+    const itemId = visibilityButton.dataset.hideItem ?? visibilityButton.dataset.unhideItem;
+    if (!getItemById(itemId)) return;
+    const nextHidden = new Set(hiddenItems);
+    if (visibilityButton.hasAttribute("data-hide-item")) nextHidden.add(itemId);
+    else nextHidden.delete(itemId);
+    if (!persistLayout(nextHidden, itemOrder)) return;
+    renderCards();
+    renderCollectibleCards();
+    return;
+  }
+
+  const duplicateButton = event.target.closest("button[data-duplicate-item]");
+  if (duplicateButton) {
+    const sourceId = duplicateButton.dataset.duplicateItem;
+    if (!ITEMS.some((item) => item.id === sourceId)) return;
+    const idNumber = Math.max(0, ...customItems.map((item) => Number(item.id.replace("custom-item-", "")))) + 1;
+    const copyNumber = Math.max(0, ...customItems.filter((item) => item.sourceId === sourceId).map((item) => item.copyNumber)) + 1;
+    const nextCustomItems = [...customItems, {
+      id: `custom-item-${idNumber}`,
+      sourceId,
+      copyNumber,
+      customName: "",
+    }];
+    if (!persistCustomItems(nextCustomItems)) return;
+    customItems = nextCustomItems;
+    state[`custom-item-${idNumber}`] = { tasks: {}, choices: {} };
+    saveState();
+    const order = getAllOrderedItems().map((item) => item.id);
+    const copyIndex = order.indexOf(`custom-item-${idNumber}`);
+    if (copyIndex >= 0) order.splice(copyIndex, 1);
+    const sourceIndex = order.indexOf(sourceId);
+    order.splice(sourceIndex + 1, 0, `custom-item-${idNumber}`);
+    persistLayout(hiddenItems, order);
+    if (category === "hidden") {
+      category = ITEMS.find((item) => item.id === sourceId).category;
+      document.querySelectorAll("#category-tabs .category-tab").forEach((tab) => {
+        const active = tab.dataset.category === category;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-pressed", String(active));
+      });
+    }
+    renderCards();
+    renderCollectibleCards();
+    return;
+  }
+
+  const renameButton = event.target.closest("button[data-rename-item]");
+  if (renameButton) {
+    const item = customItems.find((entry) => entry.id === renameButton.dataset.renameItem);
+    if (!item) return;
+    const displayName = itemDisplayName(getItemById(item.id));
+    const name = window.prompt(copy().renameCopyPrompt.replace("{item}", displayName), item.customName);
+    if (name === null) return;
+    if (name.trim().length > 60) {
+      showStorageNotice(copy().invalidCopyName);
+      return;
+    }
+    const nextCustomItems = customItems.map((entry) => entry.id === item.id ? { ...entry, customName: name.trim() } : entry);
+    if (!persistCustomItems(nextCustomItems)) return;
+    customItems = nextCustomItems;
+    renderCards();
+    renderCollectibleCards();
+    return;
+  }
+
+  const deleteButton = event.target.closest("button[data-delete-copy]");
+  if (deleteButton) {
+    const item = getItemById(deleteButton.dataset.deleteCopy);
+    if (!item || !window.confirm(copy().confirmDeleteCopy.replace("{item}", itemDisplayName(item)))) return;
+    const nextCustomItems = customItems.filter((entry) => entry.id !== item.id);
+    if (!persistCustomItems(nextCustomItems)) return;
+    customItems = nextCustomItems;
+    state = resetItemState(state, item.id);
+    saveState();
+    const nextHidden = new Set(hiddenItems);
+    nextHidden.delete(item.id);
+    persistLayout(nextHidden, itemOrder.filter((id) => id !== item.id), nextCustomItems);
+    renderCards();
+    renderCollectibleCards();
+  }
+}
+
+grid.addEventListener("click", onItemAction);
+collectibleGrid.addEventListener("click", onItemAction);
+
+noteChecklistToggle.addEventListener("change", () => {
+  noteChecklistFields.hidden = !noteChecklistToggle.checked;
+});
+
+noteForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const nextId = Math.max(0, ...notes.map((note) => Number(note.id.slice(5)))) + 1;
+  const checklist = noteChecklistToggle.checked
+    ? noteChecklistInput.value.split(/\r?\n/).map((text) => text.trim()).filter(Boolean).map((text) => ({ text, done: false }))
+    : [];
+  try {
+    const nextNotes = sanitizeNotes([...notes, {
+      id: `note-${nextId}`,
+      name: noteNameInput.value.trim(),
+      createdDate: getLocalDate(),
+      description: document.querySelector("#note-description").value.trim(),
+      completedDate: null,
+      hidden: false,
+      checklist,
+    }]);
+    if (!persistNotes(nextNotes)) return;
+    notes = nextNotes;
+    noteForm.reset();
+    noteChecklistFields.hidden = true;
+    noteFilter = "all";
+    renderNotes();
+    noteNameInput.focus();
+  } catch (error) {
+    showStorageNotice(`${copy().noteSaveError}: ${error.message}`);
+  }
+});
+
+noteList.addEventListener("change", (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
+  if (input.dataset.noteTask) {
+    const taskIndex = Number(input.dataset.noteTaskIndex);
+    updateNote(input.dataset.noteTask, (note) => ({
+      ...note,
+      checklist: note.checklist.map((task, index) => index === taskIndex ? { ...task, done: input.checked } : task),
+    }));
+  }
+});
+
+noteList.addEventListener("click", (event) => {
+  const completeButton = event.target.closest("button[data-note-complete]");
+  if (completeButton) {
+    const note = notes.find((entry) => entry.id === completeButton.dataset.noteComplete);
+    if (!note) return;
+    updateNote(note.id, (entry) => ({
+      ...entry,
+      completedDate: entry.completedDate ? null : getLocalDate(),
+    }));
+    return;
+  }
+  const visibilityButton = event.target.closest("button[data-note-visibility]");
+  if (visibilityButton) {
+    const note = notes.find((entry) => entry.id === visibilityButton.dataset.noteVisibility);
+    if (!note) return;
+    updateNote(note.id, (entry) => ({ ...entry, hidden: !entry.hidden }));
+  }
+});
+
+noteFilterButtons.forEach((button) => button.addEventListener("click", () => {
+  noteFilter = button.dataset.noteFilter;
+  renderNotes();
+}));
+
 resetButtons.forEach((resetButton) => resetButton.addEventListener("click", () => {
   if (!window.confirm(copy().confirmReset)) return;
   state = {};
@@ -750,10 +1433,91 @@ resetButtons.forEach((resetButton) => resetButton.addEventListener("click", () =
   renderCollectibleCards();
 }));
 
+plannerItemSelect.addEventListener("change", () => {
+  plannerItemId = plannerItemSelect.value;
+  renderAnvilPlanner();
+});
+
+plannerWorkSelect.addEventListener("change", () => {
+  plannerPriorWorkCount = Number(plannerWorkSelect.value);
+  renderAnvilPlanner();
+});
+
+function exportBackup() {
+  const backup = {
+    app: "enchanting-desk",
+    formatVersion: 1,
+    createdAt: new Date().toISOString(),
+    progress: sanitizeChecklistState(state, customItems),
+    customItems: sanitizeCustomItems(customItems),
+    layout: sanitizeChecklistLayout({ hidden: [...hiddenItems], order: itemOrder }, customItems),
+    notes: sanitizeNotes(notes),
+    preferences: { language, edition, version: selectedVersion },
+  };
+  const blob = new Blob([`${JSON.stringify(backup, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `cmc-backup-${backup.createdAt.slice(0, 10)}.json`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  showStorageNotice(copy().backupExportSuccess);
+}
+
+async function importBackup(file) {
+  if (!file) return;
+  try {
+    if (file.size > 1024 * 1024) throw new Error(copy().backupFileTooLarge);
+    const backup = JSON.parse(await file.text());
+    if (!backup || typeof backup !== "object" || Array.isArray(backup) || backup.app !== "enchanting-desk") {
+      throw new Error(copy().backupInvalid);
+    }
+    if (backup.formatVersion !== 1) throw new Error(copy().backupVersionUnsupported);
+    const preferences = backup.preferences;
+    if (!preferences || !["en", "de"].includes(preferences.language)
+      || !["java", "bedrock"].includes(preferences.edition)
+      || !SUPPORTED_VERSIONS.includes(preferences.version)) {
+      throw new Error(copy().backupInvalid);
+    }
+    const importedCustomItems = sanitizeCustomItems(backup.customItems);
+    const importedProgress = sanitizeChecklistState(backup.progress, importedCustomItems);
+    const importedLayout = sanitizeChecklistLayout(backup.layout ?? { hidden: [], order: [] }, importedCustomItems);
+    const importedNotes = sanitizeNotes(backup.notes ?? []);
+    if (!window.confirm(copy().backupImportConfirm)) return;
+    if (!persistBackup(importedProgress, importedCustomItems, importedLayout, importedNotes, preferences)) return;
+    state = importedProgress;
+    customItems = importedCustomItems;
+    hiddenItems = new Set(importedLayout.hidden);
+    itemOrder = importedLayout.order;
+    notes = importedNotes;
+    noteFilter = "all";
+    language = preferences.language;
+    edition = preferences.edition;
+    selectedVersion = preferences.version;
+    languageSelect.value = language;
+    editionSelect.value = edition;
+    renderVersionOptions();
+    translateStaticText();
+    renderCards();
+    renderCollectibleCards();
+    renderNotes();
+    showStorageNotice(copy().backupImportSuccess);
+  } catch (error) {
+    showStorageNotice(`${copy().backupImportError}: ${error.message}`);
+  } finally {
+    backupFileInput.value = "";
+  }
+}
+
+document.querySelector("#backup-export").addEventListener("click", exportBackup);
+document.querySelector("#backup-import").addEventListener("click", () => backupFileInput.click());
+backupFileInput.addEventListener("change", () => importBackup(backupFileInput.files[0]));
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
     event.preventDefault();
-    (currentPage === "collectibles" ? collectibleSearchInput : searchInput).focus();
+    if (currentPage === "notes") noteNameInput.focus();
+    else (currentPage === "collectibles" ? collectibleSearchInput : searchInput).focus();
   }
 });
 
@@ -764,4 +1528,6 @@ renderVersionOptions();
 translateStaticText();
 renderCards();
 renderCollectibleCards();
+noteChecklistFields.hidden = true;
+renderNotes();
 updatePage();

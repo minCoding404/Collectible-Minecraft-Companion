@@ -571,7 +571,7 @@ export const ITEMS = [
   },
 ];
 
-function makeCollectible({ id, name, english, image, glyph, collectionType, location, locationEn, wikiPage }) {
+function makeCollectible({ id, name, english, image, glyph, collectionType, location, locationEn }) {
   return {
     id,
     name,
@@ -583,11 +583,10 @@ function makeCollectible({ id, name, english, image, glyph, collectionType, loca
     tasks: [{ id: "collected", name: "Gesammelt", english: "Collected" }],
     location,
     locationEn,
-    sourceUrl: `https://minecraft.wiki/w/${wikiPage}`,
   };
 }
 
-function makeSmithingTemplate(id, name, english, image, location, locationEn, wikiPage = "Smithing_Template") {
+function makeSmithingTemplate(id, name, english, image, location, locationEn) {
   return makeCollectible({
     id: `template-${id}`,
     name,
@@ -597,14 +596,13 @@ function makeSmithingTemplate(id, name, english, image, location, locationEn, wi
     collectionType: "templates",
     location,
     locationEn,
-    wikiPage,
   });
 }
 
 const COMMON_DISC_DROP = "A skeleton, stray, or bogged must kill a creeper; the disc is random.";
 const COMMON_DISC_DROP_DE = "Ein Skelett, Streuner oder Bogged muss einen Creeper töten; die Schallplatte ist zufällig.";
 
-function makeMusicDisc(id, name, image, location, locationEn, wikiPage = "Music_Disc") {
+function makeMusicDisc(id, name, image, location, locationEn) {
   return makeCollectible({
     id: `disc-${id.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
     name: `Schallplatte ${name}`,
@@ -614,24 +612,23 @@ function makeMusicDisc(id, name, image, location, locationEn, wikiPage = "Music_
     collectionType: "music",
     location: location ?? COMMON_DISC_DROP_DE,
     locationEn: locationEn ?? COMMON_DISC_DROP,
-    wikiPage,
   });
 }
 
 export const SMITHING_TEMPLATES = [
-  makeSmithingTemplate("netherite-upgrade", "Netherit-Aufwertung", "Netherite Upgrade", "Netherite_Upgrade", "Bastion: Schatztruhe (garantiert); Brücken-, Hoglinstall- und normale Truhen (je 10 %).", "Bastion remnant: treasure chest (guaranteed); bridge, hoglin stable, and generic chests (10% each).", "Netherite_Upgrade"),
+  makeSmithingTemplate("netherite-upgrade", "Netherit-Aufwertung", "Netherite Upgrade", "Netherite_Upgrade", "Bastion: Schatztruhe (garantiert); Brücken-, Hoglinstall- und normale Truhen (je 10 %).", "Bastion remnant: treasure chest (guaranteed); bridge, hoglin stable, and generic chests (10% each)."),
   makeSmithingTemplate("sentry", "Wachposten-Rüstungsverzierung", "Sentry Armor Trim", "Sentry_Armor_Trim", "Truhe in einem Plünderer-Außenposten (25 %).", "Pillager Outpost chest (25%)."),
   makeSmithingTemplate("vex", "Vex-Rüstungsverzierung", "Vex Armor Trim", "Vex_Armor_Trim", "Zufällige Beutetruhen in einem Waldanwesen (50 %).", "Random-loot chests in a Woodland Mansion (50%)."),
-  makeSmithingTemplate("wild", "Wildnis-Rüstungsverzierung", "Wild Armor Trim", "Wild_Armor_Trim", "Dschungeltempel-Truhe (33,3 %).", "Jungle Temple chest (33.3%).", "Wild_Armor_Trim"),
+  makeSmithingTemplate("wild", "Wildnis-Rüstungsverzierung", "Wild Armor Trim", "Wild_Armor_Trim", "Dschungeltempel-Truhe (33,3 %).", "Jungle Temple chest (33.3%)."),
   makeSmithingTemplate("coast", "Küsten-Rüstungsverzierung", "Coast Armor Trim", "Coast_Armor_Trim", "Schiffswrack: Schatz-, Karten- oder Versorgungstruhe (je 16,7 %).", "Shipwreck: treasure, map, or supply chest (16.7% each)."),
-  makeSmithingTemplate("dune", "Dünen-Rüstungsverzierung", "Dune Armor Trim", "Dune_Armor_Trim", "Truhe in einer Wüstenpyramide (14,3 %).", "Desert Pyramid chest (14.3%).", "Dune_Armor_Trim"),
-  makeSmithingTemplate("wayfinder", "Wegfinder-Rüstungsverzierung", "Wayfinder Armor Trim", "Wayfinder_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%).", "Wayfinder_Armor_Trim"),
+  makeSmithingTemplate("dune", "Dünen-Rüstungsverzierung", "Dune Armor Trim", "Dune_Armor_Trim", "Truhe in einer Wüstenpyramide (14,3 %).", "Desert Pyramid chest (14.3%)."),
+  makeSmithingTemplate("wayfinder", "Wegfinder-Rüstungsverzierung", "Wayfinder Armor Trim", "Wayfinder_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
   makeSmithingTemplate("raiser", "Aufsteiger-Rüstungsverzierung", "Raiser Armor Trim", "Raiser_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
   makeSmithingTemplate("shaper", "Gestalter-Rüstungsverzierung", "Shaper Armor Trim", "Shaper_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
   makeSmithingTemplate("host", "Gastgeber-Rüstungsverzierung", "Host Armor Trim", "Host_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
   makeSmithingTemplate("ward", "Wächter-Rüstungsverzierung", "Ward Armor Trim", "Ward_Armor_Trim", "Truhe in einer Antiken Stadt (5 %).", "Ancient City chest (5%)."),
   makeSmithingTemplate("silence", "Stille-Rüstungsverzierung", "Silence Armor Trim", "Silence_Armor_Trim", "Truhe in einer Antiken Stadt (1,2 %).", "Ancient City chest (1.2%)."),
-  makeSmithingTemplate("tide", "Gezeiten-Rüstungsverzierung", "Tide Armor Trim", "Tide_Armor_Trim", "20 % Chance als Beute von einem getöteten Elder Guardian.", "20% chance to drop from a defeated Elder Guardian.", "Tide_Armor_Trim"),
+  makeSmithingTemplate("tide", "Gezeiten-Rüstungsverzierung", "Tide Armor Trim", "Tide_Armor_Trim", "20 % Chance als Beute von einem getöteten Elder Guardian.", "20% chance to drop from a defeated Elder Guardian."),
   makeSmithingTemplate("snout", "Schnauzen-Rüstungsverzierung", "Snout Armor Trim", "Snout_Armor_Trim", "Bastion: Brücken-, Schatz-, Hoglinstall- oder normale Truhe (je 8,3 %).", "Bastion Remnant: bridge, treasure, hoglin stable, or generic chest (8.3% each)."),
   makeSmithingTemplate("rib", "Rippen-Rüstungsverzierung", "Rib Armor Trim", "Rib_Armor_Trim", "Truhe in einer Netherfestung (6,7 %).", "Nether Fortress chest (6.7%)."),
   makeSmithingTemplate("eye", "Augen-Rüstungsverzierung", "Eye Armor Trim", "Eye_Armor_Trim", "Festung: Altartruhe (10 %) oder Bibliothekstruhe (garantiert).", "Stronghold: altar chest (10%) or library chest (guaranteed)."),
@@ -641,8 +638,8 @@ export const SMITHING_TEMPLATES = [
 ];
 
 export const MUSIC_DISCS = [
-  makeMusicDisc("13", "13", "13", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop.", "Music_Disc_13"),
-  makeMusicDisc("cat", "cat", "cat", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop.", "Music_Disc_cat"),
+  makeMusicDisc("13", "13", "13", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop."),
+  makeMusicDisc("cat", "cat", "cat", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop."),
   makeMusicDisc("blocks", "blocks", "blocks"),
   makeMusicDisc("chirp", "chirp", "chirp"),
   makeMusicDisc("far", "far", "far"),
@@ -655,18 +652,166 @@ export const MUSIC_DISCS = [
   makeMusicDisc("wait", "wait", "wait"),
   makeMusicDisc("otherside", "otherside", "otherside", "Monsterraum (3,1 %), Festungs-Altartruhe (2,5 %) oder Antike Stadt (8,4 %).", "Monster Room (3.1%), Stronghold altar chest (2.5%), or Ancient City (8.4%)."),
   makeMusicDisc("pigstep", "Pigstep", "Pigstep", "Allgemeine Truhen in Bastionen (5,6 %).", "Generic chests in Bastion Remnants (5.6%)."),
-  makeMusicDisc("5", "5", "5", "Antike Stadt: Disc-Fragmente (29,5 %); neun Fragmente ergeben eine Schallplatte.", "Ancient City: disc fragments (29.5%); craft one disc from nine fragments.", "Music_Disc_5"),
+  makeMusicDisc("5", "5", "5", "Antike Stadt: Disc-Fragmente (29,5 %); neun Fragmente ergeben eine Schallplatte.", "Ancient City: disc fragments (29.5%); craft one disc from nine fragments."),
   makeMusicDisc("relic", "Relic", "Relic", "Verdächtiges Kies in Trail-Ruinen (8,3 %).", "Suspicious gravel in Trail Ruins (8.3%)."),
   makeMusicDisc("precipice", "Precipice", "Precipice", "Vaults und Belohnungstruhen in Prüfungskammern (3,6 %).", "Vaults and reward chests in Trial Chambers (3.6%)."),
   makeMusicDisc("creator", "Creator", "Creator", "Unheilvolle Vaults in Prüfungskammern (7,5 %).", "Ominous Vaults in Trial Chambers (7.5%)."),
   makeMusicDisc("creator-music-box", "Creator (Music Box)", "Creator_(Music_Box)", "Verzierte Krüge in Prüfungskammern (1,4 %).", "Decorated pots in Trial Chambers (1.4%)."),
-  makeMusicDisc("tears", "Tears", "Tears", "Lass einen vom Spieler abgewehrten Ghast-Feuerball einen Ghast treffen.", "Hit a Ghast with a fireball deflected by the player.", "Music_Disc_Tears"),
-  makeMusicDisc("lava-chicken", "Lava Chicken", "Lava_Chicken", "Beute von einem Chicken Jockey; zuerst den Reiter töten.", "Dropped by a Chicken Jockey; kill the rider before the chicken.", "Music_Disc_Lava_Chicken"),
+  makeMusicDisc("tears", "Tears", "Tears", "Lass einen vom Spieler abgewehrten Ghast-Feuerball einen Ghast treffen.", "Hit a Ghast with a fireball deflected by the player."),
+  makeMusicDisc("lava-chicken", "Lava Chicken", "Lava_Chicken", "Beute von einem Chicken Jockey; zuerst den Reiter töten.", "Dropped by a Chicken Jockey; kill the rider before the chicken."),
   makeMusicDisc("bounce", "Bounce", "Bounce", "Truhen in Minenschächten innerhalb von Schwefelhöhlen (42,1 %).", "Mineshaft chests in Sulfur Caves (42.1%)."),
 ];
 
 export const COLLECTIBLES = [...SMITHING_TEMPLATES, ...MUSIC_DISCS];
 export const ALL_ITEMS = [...ITEMS, ...COLLECTIBLES];
+
+export function getAdjustedRecipe(recipe, previousWorkCount = 0) {
+  if (!Number.isInteger(previousWorkCount) || previousWorkCount < 0 || previousWorkCount > 5) {
+    throw new RangeError("Previous anvil work must be an integer from 0 to 5.");
+  }
+  let priorWorkPenalty = 2 ** previousWorkCount - 1;
+  let baselinePriorWorkPenalty = 0;
+  let additionalLevels = 0;
+  const sequence = recipe.sequence.map((step) => {
+    let stepAdjustment = 0;
+    for (let count = 0; count < (step.itemApplications ?? 0); count += 1) {
+      stepAdjustment += priorWorkPenalty - baselinePriorWorkPenalty;
+      priorWorkPenalty = priorWorkPenalty * 2 + 1;
+      baselinePriorWorkPenalty = baselinePriorWorkPenalty * 2 + 1;
+    }
+    additionalLevels += stepAdjustment;
+    return {
+      ...step,
+      adjustedCost: step.cost + stepAdjustment,
+      additionalCost: stepAdjustment,
+    };
+  });
+  return {
+    ...recipe,
+    sequence,
+    baseLevels: recipe.levels,
+    additionalLevels,
+    levels: recipe.levels + additionalLevels,
+  };
+}
+
+export function sanitizeCustomItems(value) {
+  if (!Array.isArray(value)) throw new TypeError("Custom items must be an array.");
+  const ids = new Set();
+  const copyNumbers = new Set();
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new TypeError("Each custom item must be an object.");
+    }
+    const source = ITEMS.find((item) => item.id === entry.sourceId);
+    if (!source || !/^custom-item-\d+$/.test(entry.id) || !Number.isInteger(entry.copyNumber) || entry.copyNumber < 1) {
+      throw new TypeError("A custom item has invalid identity data.");
+    }
+    const customName = entry.customName ?? "";
+    if (typeof customName !== "string" || customName.length > 60) {
+      throw new TypeError("A custom item name must be 60 characters or fewer.");
+    }
+    const copyKey = `${entry.sourceId}:${entry.copyNumber}`;
+    if (ids.has(entry.id) || copyNumbers.has(copyKey) || ALL_ITEMS.some((item) => item.id === entry.id)) {
+      throw new TypeError("Custom item identifiers must be unique.");
+    }
+    ids.add(entry.id);
+    copyNumbers.add(copyKey);
+    return { id: entry.id, sourceId: entry.sourceId, copyNumber: entry.copyNumber, customName: customName.trim() };
+  });
+}
+
+function isValidNoteDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
+}
+
+export function sanitizeNotes(value) {
+  if (!Array.isArray(value) || value.length > 500) {
+    throw new TypeError("Notes must be an array containing no more than 500 entries.");
+  }
+  const ids = new Set();
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)
+      || !/^note-\d+$/.test(entry.id) || ids.has(entry.id)
+      || typeof entry.name !== "string" || !entry.name.trim() || entry.name.length > 80
+      || typeof entry.description !== "string" || entry.description.length > 2000
+      || !isValidNoteDate(entry.createdDate)
+      || (entry.completedDate !== null && entry.completedDate !== undefined && !isValidNoteDate(entry.completedDate))
+      || typeof entry.hidden !== "boolean" || !Array.isArray(entry.checklist) || entry.checklist.length > 100) {
+      throw new TypeError("A note contains invalid or unsupported data.");
+    }
+    ids.add(entry.id);
+    const checklist = entry.checklist.map((task) => {
+      if (!task || typeof task !== "object" || Array.isArray(task)
+        || typeof task.text !== "string" || !task.text.trim() || task.text.length > 200
+        || typeof task.done !== "boolean") {
+        throw new TypeError("A note checklist contains invalid task data.");
+      }
+      return { text: task.text.trim(), done: task.done };
+    });
+    return {
+      id: entry.id,
+      name: entry.name.trim(),
+      createdDate: entry.createdDate,
+      description: entry.description.trim(),
+      completedDate: entry.completedDate || null,
+      hidden: entry.hidden,
+      checklist,
+    };
+  });
+}
+
+export function sanitizeChecklistLayout(layout, customItems = []) {
+  if (!layout || typeof layout !== "object" || Array.isArray(layout)) {
+    throw new TypeError("Checklist layout must be an object.");
+  }
+  const validIds = new Set([
+    ...ALL_ITEMS.map((item) => item.id),
+    ...sanitizeCustomItems(customItems).map((item) => item.id),
+  ]);
+  const normalizeIds = (ids) => {
+    if (!Array.isArray(ids)) return [];
+    return [...new Set(ids.filter((id) => typeof id === "string" && validIds.has(id)))];
+  };
+  return {
+    hidden: normalizeIds(layout.hidden),
+    order: normalizeIds(layout.order),
+  };
+}
+
+export function sanitizeChecklistState(progress, customItems = []) {
+  if (!progress || typeof progress !== "object" || Array.isArray(progress)) {
+    throw new TypeError("Checklist progress must be an object.");
+  }
+  const validCustomItems = sanitizeCustomItems(customItems);
+  const items = [
+    ...ALL_ITEMS,
+    ...validCustomItems.map((entry) => ({
+      ...ITEMS.find((item) => item.id === entry.sourceId),
+      id: entry.id,
+      baseItemId: entry.sourceId,
+    })),
+  ];
+  return Object.fromEntries(items.flatMap((item) => {
+    const saved = progress[item.id];
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) return [];
+    const savedTasks = saved.tasks && typeof saved.tasks === "object" && !Array.isArray(saved.tasks) ? saved.tasks : {};
+    const savedChoices = saved.choices && typeof saved.choices === "object" && !Array.isArray(saved.choices) ? saved.choices : {};
+    const allowedTasks = new Set([
+      ...item.tasks.map((task) => task.id),
+      ...(MATERIALS[item.baseItemId ?? item.id] ?? []).map((material) => `material-${material.id}`),
+      ...(item.netheriteUpgrade ? ["netherite-upgrade"] : []),
+    ]);
+    const tasks = Object.fromEntries(Object.entries(savedTasks).filter(([id, checked]) => allowedTasks.has(id) && checked === true));
+    const choices = Object.fromEntries((item.choices ?? []).flatMap((choice) => {
+      const selected = savedChoices[choice.id];
+      return choice.options.some((option) => option.id === selected) ? [[choice.id, selected]] : [];
+    }));
+    return Object.keys(tasks).length || Object.keys(choices).length ? [[item.id, { tasks, choices }]] : [];
+  }));
+}
 
 export const SUPPORTED_VERSIONS = ["1.21.11", "1.21.9", "1.21", "1.20", "1.19", "1.16"];
 
@@ -841,11 +986,11 @@ export const RECIPES = [
     item: "Helm",
     levels: 27,
     sequence: [
-      { description: "(Helm + Atmung III)", descriptionEn: "(Helmet + Respiration III)", cost: 6 },
+      { description: "(Helm + Atmung III)", descriptionEn: "(Helmet + Respiration III)", cost: 6, itemApplications: 1 },
       { description: "(Schutz IV + Wasseraffinität)", descriptionEn: "(Protection IV + Aqua Affinity)", cost: 2 },
-      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 8 },
+      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 8, itemApplications: 1 },
       { description: "(Haltbarkeit III + Reparatur)", descriptionEn: "(Unbreaking III + Mending)", cost: 2 },
-      { description: "Auf den Helm anwenden", descriptionEn: "Apply to the helmet", cost: 9 },
+      { description: "Auf den Helm anwenden", descriptionEn: "Apply to the helmet", cost: 9, itemApplications: 1 },
     ],
     note: "Ohne Dornen III. Mit Dornen III steigt das Optimum laut Guide auf 45 Level.",
     noteEn: "Without Thorns III. The guide's optimal order with Thorns III costs 45 levels.",
@@ -855,9 +1000,9 @@ export const RECIPES = [
     item: "Brustplatte",
     levels: 13,
     sequence: [
-      { description: "(Brustplatte + Schutz IV)", descriptionEn: "(Chestplate + Protection IV)", cost: 4 },
+      { description: "(Brustplatte + Schutz IV)", descriptionEn: "(Chestplate + Protection IV)", cost: 4, itemApplications: 1 },
       { description: "(Haltbarkeit III + Reparatur)", descriptionEn: "(Unbreaking III + Mending)", cost: 2 },
-      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 7 },
+      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 7, itemApplications: 1 },
     ],
   },
   {
@@ -865,10 +1010,10 @@ export const RECIPES = [
     item: "Beinschutz",
     levels: 28,
     sequence: [
-      { description: "(Beinschutz + Schleichen III)", descriptionEn: "(Leggings + Swift Sneak III)", cost: 12 },
+      { description: "(Beinschutz + Schleichen III)", descriptionEn: "(Leggings + Swift Sneak III)", cost: 12, itemApplications: 1 },
       { description: "(Haltbarkeit III + Reparatur)", descriptionEn: "(Unbreaking III + Mending)", cost: 2 },
-      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 7 },
-      { description: "Schutz IV hinzufügen", descriptionEn: "Add Protection IV", cost: 7 },
+      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 7, itemApplications: 1 },
+      { description: "Schutz IV hinzufügen", descriptionEn: "Add Protection IV", cost: 7, itemApplications: 1 },
     ],
     note: "Ohne Dornen III.",
     noteEn: "Without Thorns III.",
@@ -878,11 +1023,11 @@ export const RECIPES = [
     item: "Stiefel",
     levels: 30,
     sequence: [
-      { description: "(Stiefel + Wasserläufer III)", descriptionEn: "(Boots + Depth Strider III)", cost: 6 },
+      { description: "(Stiefel + Wasserläufer III)", descriptionEn: "(Boots + Depth Strider III)", cost: 6, itemApplications: 1 },
       { description: "(Schutz IV + Haltbarkeit III)", descriptionEn: "(Protection IV + Unbreaking III)", cost: 3 },
-      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 9 },
+      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 9, itemApplications: 1 },
       { description: "(Federfall IV + Reparatur)", descriptionEn: "(Feather Falling IV + Mending)", cost: 2 },
-      { description: "Auf die Stiefel anwenden", descriptionEn: "Apply to the boots", cost: 10 },
+      { description: "Auf die Stiefel anwenden", descriptionEn: "Apply to the boots", cost: 10, itemApplications: 1 },
     ],
     note: "Ohne Dornen III und Seelenläufer III.",
     noteEn: "Without Thorns III or Soul Speed III.",
@@ -890,15 +1035,16 @@ export const RECIPES = [
   {
     itemId: "sword",
     item: "Schwert",
+    editions: ["java"],
     levels: 49,
     sequence: [
-      { description: "(Schwert + Plünderung III)", descriptionEn: "(Sword + Looting III)", cost: 6 },
+      { description: "(Schwert + Plünderung III)", descriptionEn: "(Sword + Looting III)", cost: 6, itemApplications: 1 },
       { description: "(Schwungkraft III + Haltbarkeit III)", descriptionEn: "(Sweeping Edge III + Unbreaking III)", cost: 3 },
-      { description: "Bücher-Ergebnis kombinieren", descriptionEn: "Combine book results", cost: 11 },
+      { description: "Bücher-Ergebnis anwenden", descriptionEn: "Apply combined book", cost: 11, itemApplications: 1 },
       { description: "(Schärfe V + Rückstoß II)", descriptionEn: "(Sharpness V + Knockback II)", cost: 2 },
-      { description: "Bücher-Ergebnis kombinieren", descriptionEn: "Combine book results", cost: 11 },
+      { description: "Bücher-Ergebnis anwenden", descriptionEn: "Apply combined book", cost: 11, itemApplications: 1 },
       { description: "(Verbrennung II + Reparatur)", descriptionEn: "(Fire Aspect II + Mending)", cost: 2 },
-      { description: "Ergebnisse nacheinander anwenden", descriptionEn: "Apply the results in sequence", cost: 14 },
+      { description: "Bücher-Ergebnis anwenden", descriptionEn: "Apply combined book", cost: 14, itemApplications: 1 },
     ],
     note: "Beispiel mit optionalem Rückstoß II und Verbrennung II.",
     noteEn: "Example with optional Knockback II and Fire Aspect II.",
@@ -908,11 +1054,11 @@ export const RECIPES = [
     item: "Bogen",
     levels: 29,
     sequence: [
-      { description: "(Bogen + Stärke V)", descriptionEn: "(Bow + Power V)", cost: 5 },
+      { description: "(Bogen + Stärke V)", descriptionEn: "(Bow + Power V)", cost: 5, itemApplications: 1 },
       { description: "(Unendlichkeit + Haltbarkeit III)", descriptionEn: "(Infinity + Unbreaking III)", cost: 3 },
-      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 9 },
+      { description: "Beide Ergebnisse kombinieren", descriptionEn: "Combine both results", cost: 9, itemApplications: 1 },
       { description: "(Schlag II + Flamme)", descriptionEn: "(Punch II + Flame)", cost: 2 },
-      { description: "Auf den Bogen anwenden", descriptionEn: "Apply to the bow", cost: 10 },
+      { description: "Auf den Bogen anwenden", descriptionEn: "Apply to the bow", cost: 10, itemApplications: 1 },
     ],
     note: "Dieses Beispiel nutzt Unendlichkeit statt Reparatur.",
     noteEn: "This example uses Infinity instead of Mending.",
@@ -922,8 +1068,8 @@ export const RECIPES = [
     item: "Elytren",
     levels: 6,
     sequence: [
-      { description: "(Elytren + Haltbarkeit III)", descriptionEn: "(Elytra + Unbreaking III)", cost: 3 },
-      { description: "Reparatur hinzufügen", descriptionEn: "Add Mending", cost: 3 },
+      { description: "(Elytren + Haltbarkeit III)", descriptionEn: "(Elytra + Unbreaking III)", cost: 3, itemApplications: 1 },
+      { description: "Reparatur hinzufügen", descriptionEn: "Add Mending", cost: 3, itemApplications: 1 },
     ],
   },
 ];
