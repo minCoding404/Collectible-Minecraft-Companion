@@ -10,6 +10,7 @@ import {
   RECIPES,
   getCompletedTotal,
   getTaskTotal,
+  resetItemState,
 } from "../data.js";
 
 test("the guide checklist includes every armor, weapon, and tool item", () => {
@@ -80,6 +81,18 @@ test("diamond-tier equipment can track a Netherite upgrade", () => {
   ));
   const completedState = Object.fromEntries(upgradeableIds.map((id) => [id, { tasks: { "netherite-upgrade": true } }]));
   assert.equal(getCompletedTotal(completedState, upgradeableItems), upgradeableItems.length);
+});
+
+test("resetting one item preserves progress on every other item", () => {
+  const state = {
+    helmet: { tasks: { mending: true }, choices: { protection: "protection" } },
+    boots: { tasks: { "feather-falling": true }, choices: { movement: "depth-strider" } },
+  };
+  const reset = resetItemState(state, "helmet");
+  assert.equal(getCompletedTotal(reset), 2);
+  assert.equal(reset.helmet, undefined);
+  assert.deepEqual(reset.boots, state.boots);
+  assert.deepEqual(state.helmet.tasks, { mending: true });
 });
 
 test("published recipe totals match their listed anvil step costs", () => {

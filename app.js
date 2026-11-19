@@ -8,6 +8,7 @@ import {
   RECIPES,
   getCompletedTotal,
   getTaskTotal,
+  resetItemState,
 } from "./data.js";
 
 const STORAGE_KEY = "enchanting-desk.checklist.v1";
@@ -59,6 +60,9 @@ const UI_COPY = {
     complete: "complete",
     progressAria: "Checklist progress",
     confirmReset: "Reset all checked enchantments?",
+    confirmResetItem: "Reset all enchantments and choices for {item}?",
+    resetItem: "Reset",
+    resetItemLabel: "Reset {item} enchantments",
     storageReadError: "Your browser could not load saved progress",
     storageWriteError: "Progress will only be kept in this tab",
     netheriteUpgrade: "Upgrade to Netherite",
@@ -98,6 +102,9 @@ const UI_COPY = {
     complete: "abgeschlossen",
     progressAria: "Checklisten-Fortschritt",
     confirmReset: "Alle abgehakten Verzauberungen zurücksetzen?",
+    confirmResetItem: "Alle Verzauberungen und Auswahlen für {item} zurücksetzen?",
+    resetItem: "Zurücksetzen",
+    resetItemLabel: "Verzauberungen für {item} zurücksetzen",
     storageReadError: "Dein Browser konnte den gespeicherten Fortschritt nicht laden",
     storageWriteError: "Dein Fortschritt bleibt nur in diesem Tab erhalten",
     netheriteUpgrade: "Zu Netherit aufwerten",
@@ -307,7 +314,10 @@ function renderItem(item) {
           <h3>${escapeHTML(itemName)}</h3>
           ${language === "de" ? `<span class="item-english">${escapeHTML(item.english)}</span>` : ""}
         </div>
-        <span class="item-progress">${done}<span>/${taskCount}</span></span>
+        <div class="item-card-actions">
+          <span class="item-progress">${done}<span>/${taskCount}</span></span>
+          <button type="button" class="item-reset-button" data-reset-item="${item.id}" aria-label="${escapeHTML(copy().resetItemLabel.replace("{item}", itemName))}" ${done === 0 ? "disabled" : ""}>${copy().resetItem}</button>
+        </div>
       </div>
       <div class="item-progress-track"><span style="width:${progress}%"></span></div>
       <div class="enchantment-list">${tasks}${upgrade}</div>
@@ -386,6 +396,16 @@ languageSelect.addEventListener("change", () => {
 });
 
 grid.addEventListener("change", onGridChange);
+
+grid.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reset-item]");
+  if (!button) return;
+  const item = ITEMS.find((entry) => entry.id === button.dataset.resetItem);
+  if (!item || !window.confirm(copy().confirmResetItem.replace("{item}", language === "de" ? item.name : item.english))) return;
+  state = resetItemState(state, item.id);
+  saveState();
+  renderCards();
+});
 
 resetButton.addEventListener("click", () => {
   if (!window.confirm(copy().confirmReset)) return;

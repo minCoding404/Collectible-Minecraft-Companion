@@ -689,3 +689,9 @@ export function getCompletedTotal(state, items = ITEMS) {
     return total + checked + chosen + netheriteUpgrade;
   }, 0);
 }
+
+export function resetItemState(state, itemId) {
+  const updatedState = { ...state };
+  delete updatedState[itemId];
+  return updatedState;
+}
