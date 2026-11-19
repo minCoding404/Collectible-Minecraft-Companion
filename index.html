@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101116" />
+    <meta name="description" content="An interactive Minecraft enchantment checklist with exclusive choices and optimized anvil book orders." />
+    <title>Enchanting Desk — Minecraft Checkliste</title>
+    <link rel="preconnect" href="https://minecraft.wiki" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Enchanting Desk Startseite">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>ENCHANTING <b>DESK</b></span>
+        </a>
+        <div class="topbar-actions">
+          <span class="edition-pill"><span class="status-dot"></span><span data-i18n="editionMode">SURVIVAL MODE</span></span>
+          <label class="language-picker">
+            <span class="sr-only" data-i18n="languageLabel">Language</span>
+            <select id="language-select" aria-label="Select language">
+              <option value="en" selected>English</option>
+              <option value="de">Deutsch</option>
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="heroEyebrow">YOUR LOADOUT, YOUR PLAN</span></p>
+            <h1 id="page-title" data-i18n-html="heroTitle">Build your<br /><span>best</span> gear.</h1>
+            <p class="hero-description">
+              <span data-i18n="heroDescription">Every slot, every enchantment. Keep your perfect Minecraft loadout in sight.</span>
+            </p>
+            <a class="hero-link" href="#checklist"><span data-i18n="heroLink">Jump to checklist</span><span aria-hidden="true">↓</span></a>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="hero-glow"></div>
+            <div class="floating-rune rune-one">✧</div>
+            <div class="floating-rune rune-two">✦</div>
+            <div class="hero-book">
+              <div class="book-cover"><span>✦</span></div>
+              <div class="book-pages"></div>
+              <div class="book-spine"></div>
+            </div>
+            <div class="hero-spark spark-one"></div>
+            <div class="hero-spark spark-two"></div>
+            <div class="hero-spark spark-three"></div>
+          </div>
+          <div class="hero-footnote"><span>01</span> <span data-i18n="footnoteChecklist">GEAR CHECKLIST</span><span class="footnote-divider"></span><span data-i18n="footnoteGuide">ENCHANTMENT GUIDE</span></div>
+        </section>
+
+        <section class="progress-panel" aria-label="Checklist progress">
+          <div class="progress-heading">
+            <div>
+              <p class="eyebrow" data-i18n="progressLabel">YOUR PROGRESS</p>
+              <p class="progress-caption" data-i18n="progressCaption">One step closer to your perfect gear.</p>
+            </div>
+            <div class="progress-count"><strong id="progress-count">0 / 0</strong><span data-i18n="checkedLabel">checked</span></div>
+          </div>
+          <div
+            class="progress-track"
+            role="progressbar"
+            aria-label="Checklist progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="progress-fill"></span>
+          </div>
+          <div class="progress-meta"><span id="progress-percent">0% complete</span><button id="reset-button" class="text-button" type="button" data-i18n="resetProgress">Reset progress</button></div>
+        </section>
+
+        <section id="checklist" class="checklist-section" aria-labelledby="checklist-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="collectionEyebrow">YOUR COLLECTION</span></p>
+              <h2 id="checklist-title"><span data-i18n="collectionTitle">The checklist</span><span class="heading-period">.</span></h2>
+            </div>
+            <label class="search-box">
+              <span class="search-icon" aria-hidden="true"></span>
+              <span class="sr-only" data-i18n="searchLabel">Search items or enchantments</span>
+              <input id="search-input" type="search" placeholder="Search items..." autocomplete="off" />
+              <kbd>/</kbd>
+            </label>
+          </div>
+
+          <div id="category-tabs" class="category-tabs" role="group" aria-label="Item category">
+            <button type="button" class="category-tab is-active" data-category="all" aria-pressed="true"><span class="category-label" data-i18n="categoryAll">All</span><span class="category-count" data-count="all">0</span></button>
+            <button type="button" class="category-tab" data-category="armor" aria-pressed="false"><span class="category-label" data-i18n="categoryArmor">Armor</span><span class="category-count" data-count="armor">0</span></button>
+            <button type="button" class="category-tab" data-category="weapons" aria-pressed="false"><span class="category-label" data-i18n="categoryWeapons">Weapons</span><span class="category-count" data-count="weapons">0</span></button>
+            <button type="button" class="category-tab" data-category="tools" aria-pressed="false"><span class="category-label" data-i18n="categoryTools">Tools</span><span class="category-count" data-count="tools">0</span></button>
+          </div>
+
+          <div class="guide-note">
+            <p data-i18n="guideNote">Book combinations and level costs are shown on the relevant items. Previous anvil work can increase actual costs.</p>
+            <a href="https://minecraft.wiki/w/Tutorial:Best_enchantments_guide" target="_blank" rel="noreferrer"><span data-i18n="sourceLink">Minecraft Wiki: Best enchantments guide</span> <span aria-hidden="true">↗</span></a>
+          </div>
+          <div id="items-grid" class="items-grid" aria-live="polite"></div>
+          <p id="empty-state" class="empty-state" hidden data-i18n="emptyState">No items found. Try another search.</p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">✦</span><span>ENCHANTING <b>DESK</b></span></a>
+        <span data-i18n="footerNote">Your next adventure awaits.</span>
+      </footer>
+    </div>
+  </body>
+</html>
