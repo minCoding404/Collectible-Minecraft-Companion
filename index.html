@@ -22,7 +22,24 @@
           <a class="site-nav-link" href="#collectibles" data-i18n="navCollectibles">Collectibles</a>
         </nav>
         <div class="topbar-actions">
-          <span class="edition-pill"><span class="status-dot"></span><span data-i18n="editionMode">SURVIVAL MODE</span></span>
+          <label class="profile-picker">
+            <span class="profile-picker-label" data-i18n="editionLabel">Edition</span>
+            <select id="edition-select" aria-label="Edition">
+              <option value="java">Java Edition</option>
+              <option value="bedrock">Bedrock Edition</option>
+            </select>
+          </label>
+          <label class="profile-picker">
+            <span class="profile-picker-label" data-i18n="versionLabel">Minecraft version</span>
+            <select id="version-select" aria-label="Version">
+              <option value="1.21.11">1.21.11</option>
+              <option value="1.21.9">1.21.9</option>
+              <option value="1.21">1.21</option>
+              <option value="1.20">1.20</option>
+              <option value="1.19">1.19</option>
+              <option value="1.16">1.16</option>
+            </select>
+          </label>
           <label class="language-picker">
             <span class="sr-only" data-i18n="languageLabel">Language</span>
             <select id="language-select" aria-label="Select language">
@@ -172,6 +189,23 @@
             <p id="collectibles-empty-state" class="empty-state" hidden data-i18n="collectiblesEmptyState">No collectibles found. Try another search.</p>
           </section>
         </div>
+
+        <section class="achievement-section" aria-labelledby="achievement-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="achievementEyebrow">MILESTONES</span></p>
+              <h2 id="achievement-title" data-i18n="achievementTitle">Badges &amp; milestones.</h2>
+              <p class="achievement-description" data-i18n="achievementDescription">Finish item sets to unlock badges for your selected edition and version.</p>
+            </div>
+          </div>
+          <div class="milestone-heading">
+            <h3 data-i18n="milestonesTitle">Progress milestones</h3>
+            <span id="achievement-progress">0%</span>
+          </div>
+          <div id="milestone-list" class="milestone-list" aria-live="polite"></div>
+          <div class="milestone-heading badge-heading"><h3 data-i18n="badgesTitle">Set badges</h3></div>
+          <div id="badge-grid" class="badge-grid" aria-live="polite"></div>
+        </section>
 
         <section class="glossary-section" aria-labelledby="glossary-title">
           <div class="section-heading">

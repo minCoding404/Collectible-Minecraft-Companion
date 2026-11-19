@@ -668,6 +668,173 @@ export const MUSIC_DISCS = [
 export const COLLECTIBLES = [...SMITHING_TEMPLATES, ...MUSIC_DISCS];
 export const ALL_ITEMS = [...ITEMS, ...COLLECTIBLES];
 
+export const SUPPORTED_VERSIONS = ["1.21.11", "1.21.9", "1.21", "1.20", "1.19", "1.16"];
+
+export const VERSION_PROFILES = {
+  java: [
+    { version: "1.21.11", label: "1.21.11" },
+    { version: "1.21.9", label: "1.21.9" },
+    { version: "1.21", label: "1.21" },
+    { version: "1.20", label: "1.20" },
+    { version: "1.19", label: "1.19" },
+    { version: "1.16", label: "1.16" },
+  ],
+  bedrock: [
+    { version: "1.21.11", label: "1.21.130" },
+    { version: "1.21.9", label: "1.21.111" },
+    { version: "1.21", label: "1.21.0" },
+    { version: "1.20", label: "1.20.0" },
+    { version: "1.19", label: "1.19.0" },
+    { version: "1.16", label: "1.16.0" },
+  ],
+};
+
+export const ITEM_MIN_VERSIONS = {
+  mace: "1.21",
+  spear: "1.21.11",
+};
+
+export const TASK_MIN_VERSIONS = {
+  "soul-speed": "1.16",
+  "swift-sneak": "1.19",
+  "wind-burst": "1.21",
+  density: "1.21",
+  breach: "1.21",
+  lunge: "1.21.11",
+};
+
+export const COLLECTIBLE_MIN_VERSIONS = {
+  "template-netherite-upgrade": "1.16",
+  "template-sentry": "1.20",
+  "template-vex": "1.20",
+  "template-wild": "1.20",
+  "template-coast": "1.20",
+  "template-dune": "1.20",
+  "template-wayfinder": "1.20",
+  "template-raiser": "1.20",
+  "template-shaper": "1.20",
+  "template-host": "1.20",
+  "template-ward": "1.20",
+  "template-silence": "1.20",
+  "template-tide": "1.20",
+  "template-snout": "1.20",
+  "template-rib": "1.20",
+  "template-eye": "1.20",
+  "template-spire": "1.20",
+  "template-flow": "1.21",
+  "template-bolt": "1.21",
+  "disc-otherside": "1.18",
+  "disc-5": "1.19",
+  "disc-relic": "1.20",
+  "disc-precipice": "1.21",
+  "disc-creator": "1.21.9",
+  "disc-creator-music-box": "1.21.9",
+  "disc-tears": "1.21.11",
+  "disc-lava-chicken": "1.21.11",
+  "disc-bounce": "1.21.11",
+};
+
+export const MATERIALS = {
+  helmet: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 5", english: "Diamonds × 5" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  chestplate: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 8", english: "Diamonds × 8" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  leggings: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 7", english: "Diamonds × 7" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  boots: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 4", english: "Diamonds × 4" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  sword: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 2", english: "Diamonds × 2" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 1", english: "Sticks × 1" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  spear: [
+    { id: "diamonds", group: "crafting", name: "Diamant × 1", english: "Diamond × 1" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 2", english: "Sticks × 2" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  axe: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 3", english: "Diamonds × 3" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 2", english: "Sticks × 2" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  mace: [
+    { id: "breeze-rod", group: "crafting", name: "Breeze-Rute × 1", english: "Breeze rod × 1" },
+    { id: "heavy-core", group: "crafting", name: "Schwerer Kern × 1", english: "Heavy core × 1" },
+  ],
+  bow: [
+    { id: "sticks", group: "crafting", name: "Stöcke × 3", english: "Sticks × 3" },
+    { id: "string", group: "crafting", name: "Fäden × 3", english: "String × 3" },
+  ],
+  crossbow: [
+    { id: "sticks", group: "crafting", name: "Stöcke × 3", english: "Sticks × 3" },
+    { id: "string", group: "crafting", name: "Fäden × 2", english: "String × 2" },
+    { id: "iron-ingot", group: "crafting", name: "Eisenbarren × 1", english: "Iron ingot × 1" },
+    { id: "tripwire-hook", group: "crafting", name: "Haken × 1", english: "Tripwire hook × 1" },
+  ],
+  pickaxe: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 3", english: "Diamonds × 3" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 2", english: "Sticks × 2" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  shovel: [
+    { id: "diamonds", group: "crafting", name: "Diamant × 1", english: "Diamond × 1" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 2", english: "Sticks × 2" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  hoe: [
+    { id: "diamonds", group: "crafting", name: "Diamanten × 2", english: "Diamonds × 2" },
+    { id: "sticks", group: "crafting", name: "Stöcke × 2", english: "Sticks × 2" },
+    { id: "netherite-ingot", group: "smithing", name: "Netheritbarren × 1", english: "Netherite ingot × 1" },
+    { id: "upgrade-template", group: "smithing", name: "Netherit-Aufwertungsvorlage × 1", english: "Netherite Upgrade template × 1" },
+  ],
+  "fishing-rod": [
+    { id: "sticks", group: "crafting", name: "Stöcke × 3", english: "Sticks × 3" },
+    { id: "string", group: "crafting", name: "Fäden × 2", english: "String × 2" },
+  ],
+  shears: [
+    { id: "iron-ingots", group: "crafting", name: "Eisenbarren × 2", english: "Iron ingots × 2" },
+  ],
+  "flint-and-steel": [
+    { id: "iron-ingot", group: "crafting", name: "Eisenbarren × 1", english: "Iron ingot × 1" },
+    { id: "flint", group: "crafting", name: "Feuerstein × 1", english: "Flint × 1" },
+  ],
+  shield: [
+    { id: "planks", group: "crafting", name: "Bretter × 6", english: "Planks × 6" },
+    { id: "iron-ingot", group: "crafting", name: "Eisenbarren × 1", english: "Iron ingot × 1" },
+  ],
+  "carrot-on-a-stick": [
+    { id: "fishing-rod", group: "crafting", name: "Angel × 1", english: "Fishing rod × 1" },
+    { id: "carrot", group: "crafting", name: "Karotte × 1", english: "Carrot × 1" },
+  ],
+  "warped-fungus-on-a-stick": [
+    { id: "fishing-rod", group: "crafting", name: "Angel × 1", english: "Fishing rod × 1" },
+    { id: "warped-fungus", group: "crafting", name: "Wirrpilz × 1", english: "Warped fungus × 1" },
+  ],
+  brush: [
+    { id: "feather", group: "crafting", name: "Feder × 1", english: "Feather × 1" },
+    { id: "copper-ingot", group: "crafting", name: "Kupferbarren × 1", english: "Copper ingot × 1" },
+    { id: "stick", group: "crafting", name: "Stock × 1", english: "Stick × 1" },
+  ],
+};
+
 export const RECIPES = [
   {
     itemId: "helmet",
@@ -776,7 +943,10 @@ export const CATEGORIES_EN = {
 };
 
 export function getTaskTotal(items = ALL_ITEMS) {
-  return items.reduce((total, item) => total + item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade)), 0);
+  return items.reduce((total, item) => {
+    const materials = item.materials ?? MATERIALS[item.id] ?? [];
+    return total + item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade)) + materials.length;
+  }, 0);
 }
 
 export function getCompletedTotal(state, items = ALL_ITEMS) {
@@ -785,7 +955,9 @@ export function getCompletedTotal(state, items = ALL_ITEMS) {
     const checked = item.tasks.filter((task) => saved.tasks?.[task.id]).length;
     const chosen = item.choices?.filter((choice) => Boolean(saved.choices?.[choice.id])).length ?? 0;
     const netheriteUpgrade = item.netheriteUpgrade && saved.tasks?.["netherite-upgrade"] ? 1 : 0;
-    return total + checked + chosen + netheriteUpgrade;
+    const materials = item.materials ?? MATERIALS[item.id] ?? [];
+    const checkedMaterials = materials.filter((material) => saved.tasks?.[`material-${material.id}`]).length;
+    return total + checked + chosen + netheriteUpgrade + checkedMaterials;
   }, 0);
 }
 

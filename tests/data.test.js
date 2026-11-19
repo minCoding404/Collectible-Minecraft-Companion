@@ -9,9 +9,15 @@ import {
   ALL_ITEMS,
   COLLECTIBLES,
   ITEMS,
+  ITEM_MIN_VERSIONS,
+  TASK_MIN_VERSIONS,
+  COLLECTIBLE_MIN_VERSIONS,
+  MATERIALS,
   MUSIC_DISCS,
   RECIPES,
   SMITHING_TEMPLATES,
+  SUPPORTED_VERSIONS,
+  VERSION_PROFILES,
   getCompletedTotal,
   getTaskTotal,
   resetItemState,
@@ -34,7 +40,7 @@ test("collectible checklists cover every current smithing template and music dis
   assert.equal(MUSIC_DISCS.length, 22);
   assert.equal(COLLECTIBLES.length, 41);
   assert.equal(ALL_ITEMS.length, 63);
-  assert.equal(getTaskTotal(), 142);
+  assert.equal(getTaskTotal(), 200);
   assert.equal(new Set(COLLECTIBLES.map((item) => item.id)).size, COLLECTIBLES.length);
   assert.equal(COLLECTIBLES.filter((item) => item.collectionType === "templates").length, 19);
   assert.equal(COLLECTIBLES.filter((item) => item.collectionType === "music").length, 22);
@@ -43,6 +49,49 @@ test("collectible checklists cover every current smithing template and music dis
     assert.ok(item.locationEn, `Missing English location for ${item.id}`);
     assert.ok(item.sourceUrl.startsWith("https://minecraft.wiki/"), `Missing source link for ${item.id}`);
     assert.equal(item.tasks.length, 1, `${item.id} should have one collection checkbox`);
+  }
+});
+
+test("materials cover craftable gear and Netherite smithing requirements", () => {
+  assert.equal(Object.values(MATERIALS).flat().length, 58);
+  for (const [itemId, materials] of Object.entries(MATERIALS)) {
+    assert.ok(ITEMS.some((item) => item.id === itemId), `Unknown material recipe item ${itemId}`);
+    assert.equal(new Set(materials.map((material) => material.id)).size, materials.length, `Duplicate material for ${itemId}`);
+    assert.ok(materials.every((material) => ["crafting", "smithing"].includes(material.group)));
+    assert.ok(materials.every((material) => material.name && material.english));
+  }
+  for (const item of ITEMS.filter((entry) => entry.netheriteUpgrade)) {
+    const materialIds = MATERIALS[item.id].map((material) => material.id);
+    assert.ok(materialIds.includes("netherite-ingot"), `${item.id} needs a Netherite ingot`);
+    assert.ok(materialIds.includes("upgrade-template"), `${item.id} needs a Netherite Upgrade template`);
+  }
+  const checkedMaterials = { helmet: { tasks: { "material-diamonds": true, "material-netherite-ingot": true } } };
+  assert.equal(getCompletedTotal(checkedMaterials, [ITEMS.find((item) => item.id === "helmet")]), 2);
+});
+
+test("version compatibility metadata covers the available profile choices", () => {
+  for (const edition of ["java", "bedrock"]) {
+    assert.deepEqual(VERSION_PROFILES[edition].map((profile) => profile.version), SUPPORTED_VERSIONS);
+  }
+  assert.equal(VERSION_PROFILES.bedrock[0].label, "1.21.130");
+  assert.ok(SUPPORTED_VERSIONS.includes("1.21.11"));
+  assert.equal(ITEM_MIN_VERSIONS.spear, "1.21.11");
+  assert.equal(TASK_MIN_VERSIONS.lunge, "1.21.11");
+  assert.equal(COLLECTIBLE_MIN_VERSIONS["disc-creator-music-box"], "1.21.9");
+  for (const version of [
+    ...Object.values(ITEM_MIN_VERSIONS),
+    ...Object.values(TASK_MIN_VERSIONS),
+    ...Object.values(COLLECTIBLE_MIN_VERSIONS),
+  ]) {
+    assert.ok(SUPPORTED_VERSIONS.some((supported) => {
+      const selected = supported.split(".").map(Number);
+      const required = version.split(".").map(Number);
+      for (let index = 0; index < Math.max(selected.length, required.length); index += 1) {
+        const difference = (selected[index] ?? 0) - (required[index] ?? 0);
+        if (difference !== 0) return difference > 0;
+      }
+      return true;
+    }), `No profile can show version ${version}`);
   }
 });
 
@@ -86,7 +135,7 @@ test("category labels, choice labels, and book steps have English translations",
 
 test("progress counts checked enchantments and one selected option per exclusive group", () => {
   const item = ITEMS.find((entry) => entry.id === "boots");
-  assert.equal(getTaskTotal([item]), item.tasks.length + item.choices.length);
+  assert.equal(getTaskTotal([item]), item.tasks.length + item.choices.length + MATERIALS.boots.length + 1);
   assert.equal(getCompletedTotal({
     boots: { tasks: { mending: true, "feather-falling": true }, choices: { protection: "protection", movement: "depth-strider" } },
   }, [item]), 4);
@@ -97,7 +146,7 @@ test("diamond-tier equipment can track a Netherite upgrade", () => {
   const upgradeableItems = ITEMS.filter((item) => item.netheriteUpgrade);
   assert.deepEqual(upgradeableItems.map((item) => item.id), upgradeableIds);
   assert.equal(getTaskTotal(upgradeableItems), upgradeableItems.reduce(
-    (total, item) => total + item.tasks.length + (item.choices?.length ?? 0) + 1,
+    (total, item) => total + item.tasks.length + (item.choices?.length ?? 0) + 1 + MATERIALS[item.id].length,
     0,
   ));
   const completedState = Object.fromEntries(upgradeableIds.map((id) => [id, { tasks: { "netherite-upgrade": true } }]));

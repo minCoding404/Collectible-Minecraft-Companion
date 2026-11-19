@@ -12,6 +12,9 @@ An interactive, bilingual (English/German) checklist for planning Minecraft armo
 - View the guide's book-combination order and level costs on applicable item cards.
 - Switch between separate Enchantments and Collectibles pages, with independent filters and progress.
 - Track all current smithing templates and music discs, including where to find them.
+- Choose Java or Bedrock release profiles from 1.16/1.16.0 to 1.21.11/1.21.130; unavailable items and enchantments are filtered by edition and introduction version.
+- Check off crafting ingredients and Netherite smithing materials per item.
+- Earn set badges and 25%, 50%, 75%, and 100% checklist milestones.
 - Use the in-app glossary to look up Minecraft checklist terminology.
 - Switch between English and German; checklist progress and language preference are saved in your browser.
 - View Minecraft item artwork when connected to the internet.

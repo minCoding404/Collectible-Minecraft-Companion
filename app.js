@@ -6,9 +6,15 @@ import {
   ENCHANTMENT_INFO_EN,
   COLLECTIBLES,
   ITEMS,
+  ITEM_MIN_VERSIONS,
+  TASK_MIN_VERSIONS,
+  COLLECTIBLE_MIN_VERSIONS,
+  MATERIALS,
   MUSIC_DISCS,
   RECIPES,
   SMITHING_TEMPLATES,
+  SUPPORTED_VERSIONS,
+  VERSION_PROFILES,
   getCompletedTotal,
   getTaskTotal,
   resetItemState,
@@ -16,6 +22,8 @@ import {
 
 const STORAGE_KEY = "enchanting-desk.checklist.v1";
 const LANGUAGE_KEY = "enchanting-desk.language";
+const EDITION_KEY = "enchanting-desk.edition";
+const VERSION_KEY = "enchanting-desk.version";
 const grid = document.querySelector("#items-grid");
 const searchInput = document.querySelector("#search-input");
 const emptyState = document.querySelector("#empty-state");
@@ -24,6 +32,8 @@ const collectibleSearchInput = document.querySelector("#collectibles-search-inpu
 const collectibleEmptyState = document.querySelector("#collectibles-empty-state");
 const resetButtons = document.querySelectorAll(".reset-button");
 const languageSelect = document.querySelector("#language-select");
+const editionSelect = document.querySelector("#edition-select");
+const versionSelect = document.querySelector("#version-select");
 const storageNotice = document.createElement("p");
 document.querySelector(".progress-panel").after(storageNotice);
 let state = {};
@@ -33,6 +43,8 @@ let query = "";
 let collectibleType = "all";
 let collectibleQuery = "";
 let currentPage = "enchantments";
+let edition = "java";
+let selectedVersion = "1.21.11";
 
 const UI_COPY = {
   en: {
@@ -41,6 +53,10 @@ const UI_COPY = {
     editionMode: "SURVIVAL MODE",
     languageLabel: "Language",
     navigationLabel: "Main navigation",
+    editionLabel: "Edition",
+    versionLabel: "Minecraft version",
+    javaEdition: "Java Edition",
+    bedrockEdition: "Bedrock Edition",
     navEnchantments: "Enchantments",
     navCollectibles: "Collectibles",
     heroEyebrow: "YOUR LOADOUT, YOUR PLAN",
@@ -106,6 +122,26 @@ const UI_COPY = {
     storageWriteError: "Progress will only be kept in this tab",
     netheriteUpgrade: "Upgrade to Netherite",
     netheriteUpgradeTooltip: "Mark this when you have upgraded the diamond item to Netherite.",
+    craftingMaterials: "Crafting materials",
+    smithingMaterials: "Smithing & upgrade materials",
+    achievementEyebrow: "MILESTONES",
+    achievementTitle: "Badges & milestones.",
+    achievementDescription: "Finish item sets to unlock badges for your selected edition and version.",
+    milestonesTitle: "Progress milestones",
+    badgesTitle: "Set badges",
+    badgeUnlocked: "Unlocked",
+    badgeLocked: "In progress",
+    badgeSteps: "{done} / {total} steps",
+    armorBadge: "Armor set",
+    armorBadgeDescription: "Complete every armor checklist item.",
+    weaponsBadge: "Arsenal",
+    weaponsBadgeDescription: "Complete every weapon checklist item.",
+    toolsBadge: "Toolsmith",
+    toolsBadgeDescription: "Complete every tool checklist item.",
+    collectiblesBadge: "Collector",
+    collectiblesBadgeDescription: "Collect every available template and music disc.",
+    completionBadge: "Completionist",
+    completionBadgeDescription: "Complete every checklist item in this profile.",
   },
   de: {
     title: "Enchanting Desk — Minecraft-Checkliste",
@@ -113,6 +149,10 @@ const UI_COPY = {
     editionMode: "ÜBERLEBENS-MODUS",
     languageLabel: "Sprache",
     navigationLabel: "Hauptnavigation",
+    editionLabel: "Edition",
+    versionLabel: "Minecraft-Version",
+    javaEdition: "Java Edition",
+    bedrockEdition: "Bedrock Edition",
     navEnchantments: "Verzauberungen",
     navCollectibles: "Sammlerstücke",
     heroEyebrow: "DEIN LOADOUT, DEIN PLAN",
@@ -178,6 +218,26 @@ const UI_COPY = {
     storageWriteError: "Dein Fortschritt bleibt nur in diesem Tab erhalten",
     netheriteUpgrade: "Zu Netherit aufwerten",
     netheriteUpgradeTooltip: "Abhaken, sobald du das Diamant-Item zu Netherit aufgewertet hast.",
+    craftingMaterials: "Herstellungsmaterialien",
+    smithingMaterials: "Schmiede- und Aufwertungsmaterialien",
+    achievementEyebrow: "MEILENSTEINE",
+    achievementTitle: "Abzeichen & Meilensteine.",
+    achievementDescription: "Vervollständige Item-Sets und schalte Abzeichen für deine gewählte Edition und Version frei.",
+    milestonesTitle: "Fortschrittsmeilensteine",
+    badgesTitle: "Set-Abzeichen",
+    badgeUnlocked: "Freigeschaltet",
+    badgeLocked: "In Arbeit",
+    badgeSteps: "{done} / {total} Schritte",
+    armorBadge: "Rüstungsset",
+    armorBadgeDescription: "Schließe alle Checklisten-Items der Rüstung ab.",
+    weaponsBadge: "Waffenarsenal",
+    weaponsBadgeDescription: "Schließe alle Checklisten-Items der Waffen ab.",
+    toolsBadge: "Werkzeugmeister",
+    toolsBadgeDescription: "Schließe alle Checklisten-Items der Werkzeuge ab.",
+    collectiblesBadge: "Sammler",
+    collectiblesBadgeDescription: "Sammle alle verfügbaren Vorlagen und Schallplatten.",
+    completionBadge: "Komplettist",
+    completionBadgeDescription: "Schließe alle Checklisten-Items dieses Profils ab.",
   },
 };
 
@@ -193,6 +253,52 @@ function copy() {
   return UI_COPY[language];
 }
 
+function versionAtLeast(requiredVersion) {
+  const required = requiredVersion.split(".").map(Number);
+  const selected = selectedVersion.split(".").map(Number);
+  for (let index = 0; index < Math.max(required.length, selected.length); index += 1) {
+    const difference = (selected[index] ?? 0) - (required[index] ?? 0);
+    if (difference !== 0) return difference > 0;
+  }
+  return true;
+}
+
+function isEditionAvailable(entry) {
+  const note = entry.note ?? "";
+  if (/Nur Java Edition/.test(note) && edition !== "java") return false;
+  if (/Nur Bedrock Edition/.test(note) && edition !== "bedrock") return false;
+  return true;
+}
+
+function getAvailableItems(items) {
+  return items.flatMap((item) => {
+    const minVersion = ITEM_MIN_VERSIONS[item.id] ?? COLLECTIBLE_MIN_VERSIONS[item.id] ?? "1.0";
+    if (!versionAtLeast(minVersion)) return [];
+    const tasks = item.tasks.filter((task) => versionAtLeast(TASK_MIN_VERSIONS[task.id] ?? "1.0") && isEditionAvailable(task));
+    const choices = (item.choices ?? [])
+      .map((choice) => ({
+        ...choice,
+        options: choice.options.filter((option) => versionAtLeast(TASK_MIN_VERSIONS[option.id] ?? "1.0") && isEditionAvailable(option)),
+      }))
+      .filter((choice) => choice.options.length > 0);
+    const materials = (MATERIALS[item.id] ?? []).filter((material) => versionAtLeast(material.minVersion ?? (material.group === "smithing" ? "1.16" : "1.0")));
+    return [{
+      ...item,
+      tasks,
+      choices,
+      materials,
+      netheriteUpgrade: Boolean(item.netheriteUpgrade && versionAtLeast("1.16")),
+    }];
+  });
+}
+
+function renderVersionOptions() {
+  const profiles = VERSION_PROFILES[edition];
+  if (!profiles.some((profile) => profile.version === selectedVersion)) selectedVersion = profiles[0].version;
+  versionSelect.innerHTML = profiles.map((profile) => `<option value="${profile.version}">${profile.label}</option>`).join("");
+  versionSelect.value = selectedVersion;
+}
+
 storageNotice.className = "storage-notice";
 storageNotice.setAttribute("role", "status");
 storageNotice.hidden = true;
@@ -206,9 +312,13 @@ function readState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
+    const savedEdition = localStorage.getItem(EDITION_KEY);
+    const savedVersion = localStorage.getItem(VERSION_KEY);
     state = saved ? JSON.parse(saved) : {};
     if (!state || typeof state !== "object" || Array.isArray(state)) state = {};
     if (savedLanguage === "de" || savedLanguage === "en") language = savedLanguage;
+    if (savedEdition === "java" || savedEdition === "bedrock") edition = savedEdition;
+    if (SUPPORTED_VERSIONS.includes(savedVersion)) selectedVersion = savedVersion;
   } catch (error) {
     state = {};
     showStorageNotice(`${copy().storageReadError}: ${error.message}`);
@@ -233,6 +343,16 @@ function saveLanguage() {
   }
 }
 
+function saveProfile() {
+  try {
+    localStorage.setItem(EDITION_KEY, edition);
+    localStorage.setItem(VERSION_KEY, selectedVersion);
+    showStorageNotice("");
+  } catch (error) {
+    showStorageNotice(`${copy().storageWriteError}: ${error.message}`);
+  }
+}
+
 function translateStaticText() {
   const text = copy();
   document.documentElement.lang = language;
@@ -251,6 +371,8 @@ function translateStaticText() {
   collectibleSearchInput.placeholder = text.collectiblesSearchPlaceholder;
   collectibleSearchInput.setAttribute("aria-label", text.collectiblesSearchLabel);
   languageSelect.setAttribute("aria-label", text.languageLabel);
+  editionSelect.setAttribute("aria-label", text.editionLabel);
+  versionSelect.setAttribute("aria-label", text.versionLabel);
   document.querySelector(".site-navigation").setAttribute("aria-label", text.navigationLabel);
   document.querySelectorAll(".progress-panel").forEach((panel) => panel.setAttribute("aria-label", text.progressAria));
   document.querySelectorAll(".progress-track").forEach((track) => track.setAttribute("aria-label", text.progressAria));
@@ -293,6 +415,7 @@ function itemSearchText(item) {
     ...(item.netheriteUpgrade ? ["diamond", "netherite", "diamant", "netherit"] : []),
     item.location,
     item.locationEn,
+    ...(item.materials ?? []).flatMap((material) => [material.name, material.english]),
   ].join(" ").toLocaleLowerCase("de");
 }
 
@@ -314,6 +437,18 @@ function renderTask(item, task) {
         ${language === "de" && (task.english || note) ? `<span class="enchantment-meta">${escapeHTML(task.english)}${note ? ` <span class="item-note">${escapeHTML(note)}</span>` : ""}</span>` : note ? `<span class="enchantment-meta"><span class="item-note">${escapeHTML(note)}</span></span>` : ""}
       </span>
     </label>`;
+}
+
+function renderMaterials(item, group) {
+  const materials = (item.materials ?? []).filter((material) => material.group === group);
+  if (!materials.length) return "";
+  const heading = group === "crafting" ? copy().craftingMaterials : copy().smithingMaterials;
+  const rows = materials.map((material) => renderTask(item, {
+    id: `material-${material.id}`,
+    name: material.name,
+    english: material.english,
+  })).join("");
+  return `<section class="material-section" aria-label="${heading}"><h4>${heading}</h4><div class="material-list">${rows}</div></section>`;
 }
 
 function renderNetheriteUpgrade(item) {
@@ -371,8 +506,9 @@ function renderItem(item) {
   const tasks = item.tasks.map((task) => renderTask(item, task)).join("");
   const upgrade = renderNetheriteUpgrade(item);
   const choices = (item.choices ?? []).map((choice) => renderChoice(item, choice)).join("");
+  const materials = `${renderMaterials(item, "crafting")}${renderMaterials(item, "smithing")}`;
     const recipe = RECIPES.find((entry) => entry.itemId === item.id);
-  const taskCount = item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade));
+  const taskCount = item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade)) + (item.materials?.length ?? 0);
   const done = getCompletedTotal(state, [item]);
   const progress = taskCount ? Math.round((done / taskCount) * 100) : 0;
   const categoryName = (language === "de" ? CATEGORIES : CATEGORIES_EN)[item.category];
@@ -406,12 +542,13 @@ function renderItem(item) {
       ${locationInfo}
       <div class="enchantment-list">${tasks}${upgrade}</div>
       ${choices ? `<div class="choice-list">${choices}</div>` : ""}
+      ${materials}
       ${renderRecipe(recipe)}
     </article>`;
 }
 
 function renderCards() {
-  const filtered = ITEMS.filter((item) => (category === "all" || item.category === category) && itemSearchText(item).includes(query));
+  const filtered = getAvailableItems(ITEMS).filter((item) => (category === "all" || item.category === category) && itemSearchText(item).includes(query));
   grid.innerHTML = filtered.map(renderItem).join("");
   emptyState.hidden = filtered.length !== 0;
   grid.hidden = filtered.length === 0;
@@ -426,7 +563,7 @@ function renderCards() {
 }
 
 function renderCollectibleCards() {
-  const filtered = COLLECTIBLES.filter((item) => (collectibleType === "all" || item.collectionType === collectibleType) && itemSearchText(item).includes(collectibleQuery));
+  const filtered = getAvailableItems(COLLECTIBLES).filter((item) => (collectibleType === "all" || item.collectionType === collectibleType) && itemSearchText(item).includes(collectibleQuery));
   collectibleGrid.innerHTML = filtered.map(renderItem).join("");
   collectibleEmptyState.hidden = filtered.length !== 0;
   collectibleGrid.hidden = filtered.length === 0;
@@ -442,7 +579,7 @@ function renderCollectibleCards() {
 
 function updateProgress() {
   document.querySelectorAll(".progress-panel").forEach((panel) => {
-    const items = panel.dataset.progressScope === "collectibles" ? COLLECTIBLES : ITEMS;
+    const items = getAvailableItems(panel.dataset.progressScope === "collectibles" ? COLLECTIBLES : ITEMS);
     const total = getTaskTotal(items);
     const completed = getCompletedTotal(state, items);
     const percent = total ? Math.round((completed / total) * 100) : 0;
@@ -454,16 +591,50 @@ function updateProgress() {
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", label.textContent);
   });
+  updateAchievements();
 }
 
 function updateCategoryCounts() {
+  const gearItems = getAvailableItems(ITEMS);
+  const collectibles = getAvailableItems(COLLECTIBLES);
   for (const key of ["all", "armor", "weapons", "tools"]) {
-    const count = key === "all" ? ITEMS.length : ITEMS.filter((item) => item.category === key).length;
+    const count = key === "all" ? gearItems.length : gearItems.filter((item) => item.category === key).length;
     document.querySelector(`[data-count="${key}"]`).textContent = String(count);
   }
-  document.querySelector('[data-collectible-count="all"]').textContent = String(COLLECTIBLES.length);
-  document.querySelector('[data-collectible-count="templates"]').textContent = String(SMITHING_TEMPLATES.length);
-  document.querySelector('[data-collectible-count="music"]').textContent = String(MUSIC_DISCS.length);
+  document.querySelector('[data-collectible-count="all"]').textContent = String(collectibles.length);
+  document.querySelector('[data-collectible-count="templates"]').textContent = String(collectibles.filter((item) => item.collectionType === "templates").length);
+  document.querySelector('[data-collectible-count="music"]').textContent = String(collectibles.filter((item) => item.collectionType === "music").length);
+}
+
+function updateAchievements() {
+  const gearItems = getAvailableItems(ITEMS);
+  const collectibles = getAvailableItems(COLLECTIBLES);
+  const allItems = [...gearItems, ...collectibles];
+  const completed = getCompletedTotal(state, allItems);
+  const total = getTaskTotal(allItems);
+  const percent = total ? Math.floor((completed / total) * 100) : 0;
+  document.querySelector("#achievement-progress").textContent = `${percent}%`;
+  document.querySelector("#milestone-list").innerHTML = [25, 50, 75, 100].map((threshold) => {
+    const unlocked = percent >= threshold;
+    return `<div class="milestone-card${unlocked ? " is-unlocked" : ""}" aria-label="${threshold}% ${unlocked ? copy().badgeUnlocked : copy().badgeLocked}">${unlocked ? "✓" : "◇"} ${threshold}%</div>`;
+  }).join("");
+
+  const badges = [
+    { items: gearItems.filter((item) => item.category === "armor"), icon: "◈", name: copy().armorBadge, description: copy().armorBadgeDescription },
+    { items: gearItems.filter((item) => item.category === "weapons"), icon: "⚔", name: copy().weaponsBadge, description: copy().weaponsBadgeDescription },
+    { items: gearItems.filter((item) => item.category === "tools"), icon: "⚒", name: copy().toolsBadge, description: copy().toolsBadgeDescription },
+    { items: collectibles, icon: "♫", name: copy().collectiblesBadge, description: copy().collectiblesBadgeDescription },
+    { items: allItems, icon: "✦", name: copy().completionBadge, description: copy().completionBadgeDescription },
+  ];
+  document.querySelector("#badge-grid").innerHTML = badges.map((badge) => {
+    const badgeTotal = getTaskTotal(badge.items);
+    const badgeCompleted = getCompletedTotal(state, badge.items);
+    const unlocked = badgeTotal > 0 && badgeCompleted === badgeTotal;
+    const status = unlocked
+      ? copy().badgeUnlocked
+      : copy().badgeSteps.replace("{done}", String(badgeCompleted)).replace("{total}", String(badgeTotal));
+    return `<article class="badge-card${unlocked ? " is-unlocked" : ""}" aria-label="${escapeHTML(`${badge.name}: ${status}. ${badge.description}`)}"><span class="badge-icon" aria-hidden="true">${badge.icon}</span><strong class="badge-name">${escapeHTML(badge.name)}</strong><span class="badge-status">${escapeHTML(status)}</span></article>`;
+  }).join("");
 }
 
 function onGridChange(event) {
@@ -488,7 +659,7 @@ document.querySelector("#category-tabs").addEventListener("click", (event) => {
   const button = event.target.closest("[data-category]");
   if (!button) return;
   category = button.dataset.category;
-  document.querySelectorAll(".category-tab").forEach((tab) => {
+  document.querySelectorAll("#category-tabs .category-tab").forEach((tab) => {
     const active = tab === button;
     tab.classList.toggle("is-active", active);
     tab.setAttribute("aria-pressed", String(active));
@@ -537,6 +708,23 @@ languageSelect.addEventListener("change", () => {
   selectLanguage(languageSelect.value);
 });
 
+editionSelect.addEventListener("change", () => {
+  edition = editionSelect.value === "bedrock" ? "bedrock" : "java";
+  renderVersionOptions();
+  saveProfile();
+  renderCards();
+  renderCollectibleCards();
+});
+
+versionSelect.addEventListener("change", () => {
+  selectedVersion = VERSION_PROFILES[edition].some((profile) => profile.version === versionSelect.value)
+    ? versionSelect.value
+    : VERSION_PROFILES[edition][0].version;
+  saveProfile();
+  renderCards();
+  renderCollectibleCards();
+});
+
 grid.addEventListener("change", onGridChange);
 collectibleGrid.addEventListener("change", onGridChange);
 
@@ -571,6 +759,8 @@ document.addEventListener("keydown", (event) => {
 
 readState();
 languageSelect.value = language;
+editionSelect.value = edition;
+renderVersionOptions();
 translateStaticText();
 renderCards();
 renderCollectibleCards();
