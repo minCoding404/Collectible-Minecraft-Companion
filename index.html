@@ -13,10 +13,14 @@
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Enchanting Desk Startseite">
+        <a class="brand" href="#enchantments" aria-label="Enchanting Desk home">
           <span class="brand-mark" aria-hidden="true">✦</span>
           <span>ENCHANTING <b>DESK</b></span>
         </a>
+        <nav class="site-navigation" aria-label="Main navigation">
+          <a class="site-nav-link" href="#enchantments" data-i18n="navEnchantments">Enchantments</a>
+          <a class="site-nav-link" href="#collectibles" data-i18n="navCollectibles">Collectibles</a>
+        </nav>
         <div class="topbar-actions">
           <span class="edition-pill"><span class="status-dot"></span><span data-i18n="editionMode">SURVIVAL MODE</span></span>
           <label class="language-picker">
@@ -30,6 +34,7 @@
       </header>
 
       <main>
+        <div id="enchantments-page" class="site-page">
         <section class="hero" aria-labelledby="page-title">
           <div class="hero-copy">
             <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="heroEyebrow">YOUR LOADOUT, YOUR PLAN</span></p>
@@ -57,13 +62,13 @@
           <div class="hero-footnote"><span>01</span> <span data-i18n="footnoteChecklist">GEAR CHECKLIST</span><span class="footnote-divider"></span><span data-i18n="footnoteGuide">ENCHANTMENT GUIDE</span></div>
         </section>
 
-        <section class="progress-panel" aria-label="Checklist progress">
+        <section class="progress-panel" data-progress-scope="gear" aria-label="Checklist progress">
           <div class="progress-heading">
             <div>
               <p class="eyebrow" data-i18n="progressLabel">YOUR PROGRESS</p>
               <p class="progress-caption" data-i18n="progressCaption">One step closer to your perfect gear.</p>
             </div>
-            <div class="progress-count"><strong id="progress-count">0 / 0</strong><span data-i18n="checkedLabel">checked</span></div>
+            <div class="progress-count"><strong class="progress-count-number">0 / 0</strong><span data-i18n="checkedLabel">checked</span></div>
           </div>
           <div
             class="progress-track"
@@ -73,9 +78,9 @@
             aria-valuemax="100"
             aria-valuenow="0"
           >
-            <span id="progress-fill"></span>
+            <span class="progress-fill"></span>
           </div>
-          <div class="progress-meta"><span id="progress-percent">0% complete</span><button id="reset-button" class="text-button" type="button" data-i18n="resetProgress">Reset progress</button></div>
+          <div class="progress-meta"><span class="progress-percent">0% complete</span><button class="text-button reset-button" type="button" data-i18n="resetProgress">Reset progress</button></div>
         </section>
 
         <section id="checklist" class="checklist-section" aria-labelledby="checklist-title">
@@ -106,11 +111,87 @@
           <div id="items-grid" class="items-grid" aria-live="polite"></div>
           <p id="empty-state" class="empty-state" hidden data-i18n="emptyState">No items found. Try another search.</p>
         </section>
+        </div>
+
+        <div id="collectibles-page" class="site-page" hidden>
+          <section class="hero collectibles-hero" aria-labelledby="collectibles-title">
+            <div class="hero-copy">
+              <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="collectiblesEyebrow">EXPLORE AND COLLECT</span></p>
+              <h1 id="collectibles-title" data-i18n-html="collectiblesTitle">Smithing templates<br /><span>&amp; music discs.</span></h1>
+              <p class="hero-description" data-i18n="collectiblesDescription">Track every current template and disc, with its in-game find location.</p>
+              <a class="hero-link" href="#collectibles-checklist"><span data-i18n="heroLink">Jump to checklist</span><span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
+              <div class="hero-glow"></div>
+              <div class="floating-rune rune-one">♫</div>
+              <div class="floating-rune rune-two">✦</div>
+              <div class="hero-book"><div class="book-cover"><span>✧</span></div><div class="book-pages"></div><div class="book-spine"></div></div>
+              <div class="hero-spark spark-one"></div><div class="hero-spark spark-two"></div><div class="hero-spark spark-three"></div>
+            </div>
+            <div class="hero-footnote"><span>02</span> <span data-i18n="navCollectibles">COLLECTIBLES</span><span class="footnote-divider"></span><span data-i18n="collectiblesEyebrow">EXPLORE AND COLLECT</span></div>
+          </section>
+
+          <section class="progress-panel" data-progress-scope="collectibles" aria-label="Checklist progress">
+            <div class="progress-heading">
+              <div>
+                <p class="eyebrow" data-i18n="progressLabel">PAGE PROGRESS</p>
+                <p class="progress-caption" data-i18n="progressCaption">Track your progress in this checklist.</p>
+              </div>
+              <div class="progress-count"><strong class="progress-count-number">0 / 0</strong><span data-i18n="checkedLabel">checked</span></div>
+            </div>
+            <div class="progress-track" role="progressbar" aria-label="Checklist progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="progress-fill"></span></div>
+            <div class="progress-meta"><span class="progress-percent">0% complete</span><button class="text-button reset-button" type="button" data-i18n="resetProgress">Reset progress</button></div>
+          </section>
+
+          <section id="collectibles-checklist" class="checklist-section" aria-labelledby="collectibles-checklist-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="collectionEyebrow">YOUR COLLECTION</span></p>
+                <h2 id="collectibles-checklist-title"><span data-i18n="navCollectibles">Collectibles</span><span class="heading-period">.</span></h2>
+              </div>
+              <label class="search-box">
+                <span class="search-icon" aria-hidden="true"></span>
+                <span class="sr-only" data-i18n="collectiblesSearchLabel">Search collectibles or find locations</span>
+                <input id="collectibles-search-input" type="search" placeholder="Search templates, discs, or locations..." autocomplete="off" />
+                <kbd>/</kbd>
+              </label>
+            </div>
+            <div id="collectible-tabs" class="category-tabs" role="group" aria-label="Collectible type">
+              <button type="button" class="category-tab is-active" data-collectible-type="all" aria-pressed="true"><span class="category-label" data-i18n="collectionAll">All</span><span class="category-count" data-collectible-count="all">0</span></button>
+              <button type="button" class="category-tab" data-collectible-type="templates" aria-pressed="false"><span class="category-label" data-i18n="collectionTemplates">Smithing templates</span><span class="category-count" data-collectible-count="templates">0</span></button>
+              <button type="button" class="category-tab" data-collectible-type="music" aria-pressed="false"><span class="category-label" data-i18n="collectionMusic">Music discs</span><span class="category-count" data-collectible-count="music">0</span></button>
+            </div>
+            <div class="guide-note">
+              <p data-i18n="collectiblesDescription">Track every current template and disc, with its in-game find location.</p>
+              <a href="https://minecraft.wiki/w/Smithing_Template" target="_blank" rel="noreferrer"><span data-i18n="collectionTemplates">Smithing templates</span> <span aria-hidden="true">↗</span></a>
+              <a href="https://minecraft.wiki/w/Music_Disc" target="_blank" rel="noreferrer"><span data-i18n="collectionMusic">Music discs</span> <span aria-hidden="true">↗</span></a>
+            </div>
+            <div id="collectibles-grid" class="items-grid" aria-live="polite"></div>
+            <p id="collectibles-empty-state" class="empty-state" hidden data-i18n="collectiblesEmptyState">No collectibles found. Try another search.</p>
+          </section>
+        </div>
+
+        <section class="glossary-section" aria-labelledby="glossary-title">
+          <div class="section-heading">
+            <div><p class="eyebrow"><span class="eyebrow-line"></span> <span data-i18n="glossaryTitle">Glossary</span></p><h2 id="glossary-title" data-i18n="glossaryTitle">Glossary.</h2></div>
+          </div>
+          <dl class="glossary-grid">
+            <div><dt data-i18n="glossaryEnchantmentTerm">Enchantment</dt><dd data-i18n="glossaryEnchantmentDefinition"></dd></div>
+            <div><dt data-i18n="glossaryExclusiveTerm">Exclusive enchantments</dt><dd data-i18n="glossaryExclusiveDefinition"></dd></div>
+            <div><dt data-i18n="glossaryAnvilTerm">Anvil cost</dt><dd data-i18n="glossaryAnvilDefinition"></dd></div>
+            <div><dt data-i18n="glossaryTemplateTerm">Smithing template</dt><dd data-i18n="glossaryTemplateDefinition"></dd></div>
+            <div><dt data-i18n="glossaryArmorTrimTerm">Armor trim</dt><dd data-i18n="glossaryArmorTrimDefinition"></dd></div>
+            <div><dt data-i18n="glossaryMusicDiscTerm">Music disc</dt><dd data-i18n="glossaryMusicDiscDefinition"></dd></div>
+          </dl>
+        </section>
       </main>
 
       <footer class="footer">
-        <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">✦</span><span>ENCHANTING <b>DESK</b></span></a>
+        <a class="brand footer-brand" href="#enchantments"><span class="brand-mark" aria-hidden="true">✦</span><span>ENCHANTING <b>DESK</b></span></a>
         <span data-i18n="footerNote">Your next adventure awaits.</span>
+        <span class="made-by"><span data-i18n="madeBy">Made by</span> <a href="https://github.com/minCoding404" target="_blank" rel="noreferrer" data-i18n="madeByName">minCoding404</a></span>
       </footer>
     </div>
   </body>

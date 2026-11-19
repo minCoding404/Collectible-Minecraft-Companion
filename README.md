@@ -10,10 +10,15 @@ An interactive, bilingual (English/German) checklist for planning Minecraft armo
 - Track when eligible diamond equipment has been upgraded to Netherite.
 - See enchantment explanations on hover or keyboard focus.
 - View the guide's book-combination order and level costs on applicable item cards.
+- Switch between separate Enchantments and Collectibles pages, with independent filters and progress.
+- Track all current smithing templates and music discs, including where to find them.
+- Use the in-app glossary to look up Minecraft checklist terminology.
 - Switch between English and German; checklist progress and language preference are saved in your browser.
 - View Minecraft item artwork when connected to the internet.
 
 The app needs no backend or account. Checklist data is stored locally in your browser.
+
+Collectible locations are linked to the [Minecraft Wiki smithing template](https://minecraft.wiki/w/Smithing_Template) and [music disc](https://minecraft.wiki/w/Music_Disc) pages.
 
 ## Run locally
 

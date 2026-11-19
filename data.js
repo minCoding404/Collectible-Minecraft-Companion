@@ -571,6 +571,103 @@ export const ITEMS = [
   },
 ];
 
+function makeCollectible({ id, name, english, image, glyph, collectionType, location, locationEn, wikiPage }) {
+  return {
+    id,
+    name,
+    english,
+    category: "collectibles",
+    image,
+    glyph,
+    collectionType,
+    tasks: [{ id: "collected", name: "Gesammelt", english: "Collected" }],
+    location,
+    locationEn,
+    sourceUrl: `https://minecraft.wiki/w/${wikiPage}`,
+  };
+}
+
+function makeSmithingTemplate(id, name, english, image, location, locationEn, wikiPage = "Smithing_Template") {
+  return makeCollectible({
+    id: `template-${id}`,
+    name,
+    english,
+    image: `Invicon_${image}.png`,
+    glyph: "✦",
+    collectionType: "templates",
+    location,
+    locationEn,
+    wikiPage,
+  });
+}
+
+const COMMON_DISC_DROP = "A skeleton, stray, or bogged must kill a creeper; the disc is random.";
+const COMMON_DISC_DROP_DE = "Ein Skelett, Streuner oder Bogged muss einen Creeper töten; die Schallplatte ist zufällig.";
+
+function makeMusicDisc(id, name, image, location, locationEn, wikiPage = "Music_Disc") {
+  return makeCollectible({
+    id: `disc-${id.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    name: `Schallplatte ${name}`,
+    english: `Music Disc ${name}`,
+    image: `Invicon_Music_Disc_${image}.png`,
+    glyph: "♫",
+    collectionType: "music",
+    location: location ?? COMMON_DISC_DROP_DE,
+    locationEn: locationEn ?? COMMON_DISC_DROP,
+    wikiPage,
+  });
+}
+
+export const SMITHING_TEMPLATES = [
+  makeSmithingTemplate("netherite-upgrade", "Netherit-Aufwertung", "Netherite Upgrade", "Netherite_Upgrade", "Bastion: Schatztruhe (garantiert); Brücken-, Hoglinstall- und normale Truhen (je 10 %).", "Bastion remnant: treasure chest (guaranteed); bridge, hoglin stable, and generic chests (10% each).", "Netherite_Upgrade"),
+  makeSmithingTemplate("sentry", "Wachposten-Rüstungsverzierung", "Sentry Armor Trim", "Sentry_Armor_Trim", "Truhe in einem Plünderer-Außenposten (25 %).", "Pillager Outpost chest (25%)."),
+  makeSmithingTemplate("vex", "Vex-Rüstungsverzierung", "Vex Armor Trim", "Vex_Armor_Trim", "Zufällige Beutetruhen in einem Waldanwesen (50 %).", "Random-loot chests in a Woodland Mansion (50%)."),
+  makeSmithingTemplate("wild", "Wildnis-Rüstungsverzierung", "Wild Armor Trim", "Wild_Armor_Trim", "Dschungeltempel-Truhe (33,3 %).", "Jungle Temple chest (33.3%).", "Wild_Armor_Trim"),
+  makeSmithingTemplate("coast", "Küsten-Rüstungsverzierung", "Coast Armor Trim", "Coast_Armor_Trim", "Schiffswrack: Schatz-, Karten- oder Versorgungstruhe (je 16,7 %).", "Shipwreck: treasure, map, or supply chest (16.7% each)."),
+  makeSmithingTemplate("dune", "Dünen-Rüstungsverzierung", "Dune Armor Trim", "Dune_Armor_Trim", "Truhe in einer Wüstenpyramide (14,3 %).", "Desert Pyramid chest (14.3%).", "Dune_Armor_Trim"),
+  makeSmithingTemplate("wayfinder", "Wegfinder-Rüstungsverzierung", "Wayfinder Armor Trim", "Wayfinder_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%).", "Wayfinder_Armor_Trim"),
+  makeSmithingTemplate("raiser", "Aufsteiger-Rüstungsverzierung", "Raiser Armor Trim", "Raiser_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
+  makeSmithingTemplate("shaper", "Gestalter-Rüstungsverzierung", "Shaper Armor Trim", "Shaper_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
+  makeSmithingTemplate("host", "Gastgeber-Rüstungsverzierung", "Host Armor Trim", "Host_Armor_Trim", "Seltenes verdächtiges Kies in Trail-Ruinen (8,3 %).", "Rare suspicious gravel in Trail Ruins (8.3%)."),
+  makeSmithingTemplate("ward", "Wächter-Rüstungsverzierung", "Ward Armor Trim", "Ward_Armor_Trim", "Truhe in einer Antiken Stadt (5 %).", "Ancient City chest (5%)."),
+  makeSmithingTemplate("silence", "Stille-Rüstungsverzierung", "Silence Armor Trim", "Silence_Armor_Trim", "Truhe in einer Antiken Stadt (1,2 %).", "Ancient City chest (1.2%)."),
+  makeSmithingTemplate("tide", "Gezeiten-Rüstungsverzierung", "Tide Armor Trim", "Tide_Armor_Trim", "20 % Chance als Beute von einem getöteten Elder Guardian.", "20% chance to drop from a defeated Elder Guardian.", "Tide_Armor_Trim"),
+  makeSmithingTemplate("snout", "Schnauzen-Rüstungsverzierung", "Snout Armor Trim", "Snout_Armor_Trim", "Bastion: Brücken-, Schatz-, Hoglinstall- oder normale Truhe (je 8,3 %).", "Bastion Remnant: bridge, treasure, hoglin stable, or generic chest (8.3% each)."),
+  makeSmithingTemplate("rib", "Rippen-Rüstungsverzierung", "Rib Armor Trim", "Rib_Armor_Trim", "Truhe in einer Netherfestung (6,7 %).", "Nether Fortress chest (6.7%)."),
+  makeSmithingTemplate("eye", "Augen-Rüstungsverzierung", "Eye Armor Trim", "Eye_Armor_Trim", "Festung: Altartruhe (10 %) oder Bibliothekstruhe (garantiert).", "Stronghold: altar chest (10%) or library chest (guaranteed)."),
+  makeSmithingTemplate("spire", "Turm-Rüstungsverzierung", "Spire Armor Trim", "Spire_Armor_Trim", "Truhe in einer Endstadt (6,7 %).", "End City chest (6.7%)."),
+  makeSmithingTemplate("flow", "Fluss-Rüstungsverzierung", "Flow Armor Trim", "Flow_Armor_Trim", "Unheilvolle Vault in einer Prüfungskammer (22,5 %).", "Ominous Vault in a Trial Chamber (22.5%)."),
+  makeSmithingTemplate("bolt", "Blitz-Rüstungsverzierung", "Bolt Armor Trim", "Bolt_Armor_Trim", "Vault oder Belohnungstruhe in einer Prüfungskammer (6,3 %).", "Vault or reward chest in a Trial Chamber (6.3%)."),
+];
+
+export const MUSIC_DISCS = [
+  makeMusicDisc("13", "13", "13", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop.", "Music_Disc_13"),
+  makeMusicDisc("cat", "cat", "cat", "Monsterraum (21,5 %), Waldanwesen (21,8 %) oder Antike Stadt (16,1 %); außerdem Creeper-Beute.", "Monster Room (21.5%), Woodland Mansion (21.8%), or Ancient City (16.1%); also a creeper drop.", "Music_Disc_cat"),
+  makeMusicDisc("blocks", "blocks", "blocks"),
+  makeMusicDisc("chirp", "chirp", "chirp"),
+  makeMusicDisc("far", "far", "far"),
+  makeMusicDisc("mall", "mall", "mall"),
+  makeMusicDisc("mellohi", "mellohi", "mellohi"),
+  makeMusicDisc("stal", "stal", "stal"),
+  makeMusicDisc("strad", "strad", "strad"),
+  makeMusicDisc("ward", "ward", "ward"),
+  makeMusicDisc("11", "11", "11"),
+  makeMusicDisc("wait", "wait", "wait"),
+  makeMusicDisc("otherside", "otherside", "otherside", "Monsterraum (3,1 %), Festungs-Altartruhe (2,5 %) oder Antike Stadt (8,4 %).", "Monster Room (3.1%), Stronghold altar chest (2.5%), or Ancient City (8.4%)."),
+  makeMusicDisc("pigstep", "Pigstep", "Pigstep", "Allgemeine Truhen in Bastionen (5,6 %).", "Generic chests in Bastion Remnants (5.6%)."),
+  makeMusicDisc("5", "5", "5", "Antike Stadt: Disc-Fragmente (29,5 %); neun Fragmente ergeben eine Schallplatte.", "Ancient City: disc fragments (29.5%); craft one disc from nine fragments.", "Music_Disc_5"),
+  makeMusicDisc("relic", "Relic", "Relic", "Verdächtiges Kies in Trail-Ruinen (8,3 %).", "Suspicious gravel in Trail Ruins (8.3%)."),
+  makeMusicDisc("precipice", "Precipice", "Precipice", "Vaults und Belohnungstruhen in Prüfungskammern (3,6 %).", "Vaults and reward chests in Trial Chambers (3.6%)."),
+  makeMusicDisc("creator", "Creator", "Creator", "Unheilvolle Vaults in Prüfungskammern (7,5 %).", "Ominous Vaults in Trial Chambers (7.5%)."),
+  makeMusicDisc("creator-music-box", "Creator (Music Box)", "Creator_(Music_Box)", "Verzierte Krüge in Prüfungskammern (1,4 %).", "Decorated pots in Trial Chambers (1.4%)."),
+  makeMusicDisc("tears", "Tears", "Tears", "Lass einen vom Spieler abgewehrten Ghast-Feuerball einen Ghast treffen.", "Hit a Ghast with a fireball deflected by the player.", "Music_Disc_Tears"),
+  makeMusicDisc("lava-chicken", "Lava Chicken", "Lava_Chicken", "Beute von einem Chicken Jockey; zuerst den Reiter töten.", "Dropped by a Chicken Jockey; kill the rider before the chicken.", "Music_Disc_Lava_Chicken"),
+  makeMusicDisc("bounce", "Bounce", "Bounce", "Truhen in Minenschächten innerhalb von Schwefelhöhlen (42,1 %).", "Mineshaft chests in Sulfur Caves (42.1%)."),
+];
+
+export const COLLECTIBLES = [...SMITHING_TEMPLATES, ...MUSIC_DISCS];
+export const ALL_ITEMS = [...ITEMS, ...COLLECTIBLES];
+
 export const RECIPES = [
   {
     itemId: "helmet",
@@ -668,19 +765,21 @@ export const CATEGORIES = {
   armor: "Rüstung",
   weapons: "Waffen",
   tools: "Werkzeuge",
+  collectibles: "Sammlerstücke",
 };
 
 export const CATEGORIES_EN = {
   armor: "Armor",
   weapons: "Weapons",
   tools: "Tools",
+  collectibles: "Collectibles",
 };
 
-export function getTaskTotal(items = ITEMS) {
+export function getTaskTotal(items = ALL_ITEMS) {
   return items.reduce((total, item) => total + item.tasks.length + (item.choices?.length ?? 0) + Number(Boolean(item.netheriteUpgrade)), 0);
 }
 
-export function getCompletedTotal(state, items = ITEMS) {
+export function getCompletedTotal(state, items = ALL_ITEMS) {
   return items.reduce((total, item) => {
     const saved = state[item.id] ?? {};
     const checked = item.tasks.filter((task) => saved.tasks?.[task.id]).length;

@@ -6,8 +6,12 @@ import {
   CHOICE_LABELS_EN,
   ENCHANTMENT_INFO,
   ENCHANTMENT_INFO_EN,
+  ALL_ITEMS,
+  COLLECTIBLES,
   ITEMS,
+  MUSIC_DISCS,
   RECIPES,
+  SMITHING_TEMPLATES,
   getCompletedTotal,
   getTaskTotal,
   resetItemState,
@@ -18,11 +22,28 @@ test("the guide checklist includes every armor, weapon, and tool item", () => {
   assert.deepEqual(
     Object.fromEntries(Object.keys(CATEGORIES).map((category) => [
       category,
-      ITEMS.filter((item) => item.category === category).length,
+      (category === "collectibles" ? COLLECTIBLES : ITEMS).filter((item) => item.category === category).length,
     ])),
-    { armor: 5, weapons: 7, tools: 10 },
+    { armor: 5, weapons: 7, tools: 10, collectibles: 41 },
   );
   assert.equal(new Set(ITEMS.map((item) => item.id)).size, ITEMS.length);
+});
+
+test("collectible checklists cover every current smithing template and music disc with a location", () => {
+  assert.equal(SMITHING_TEMPLATES.length, 19);
+  assert.equal(MUSIC_DISCS.length, 22);
+  assert.equal(COLLECTIBLES.length, 41);
+  assert.equal(ALL_ITEMS.length, 63);
+  assert.equal(getTaskTotal(), 142);
+  assert.equal(new Set(COLLECTIBLES.map((item) => item.id)).size, COLLECTIBLES.length);
+  assert.equal(COLLECTIBLES.filter((item) => item.collectionType === "templates").length, 19);
+  assert.equal(COLLECTIBLES.filter((item) => item.collectionType === "music").length, 22);
+  for (const item of COLLECTIBLES) {
+    assert.ok(item.location, `Missing German location for ${item.id}`);
+    assert.ok(item.locationEn, `Missing English location for ${item.id}`);
+    assert.ok(item.sourceUrl.startsWith("https://minecraft.wiki/"), `Missing source link for ${item.id}`);
+    assert.equal(item.tasks.length, 1, `${item.id} should have one collection checkbox`);
+  }
 });
 
 test("every exclusive choice is represented as one selection task", () => {
